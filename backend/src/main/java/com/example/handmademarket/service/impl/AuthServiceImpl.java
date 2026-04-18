@@ -44,9 +44,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseResult login(LoginRequest request) {
-        if (request.getUserAccount() == null || request.getPassword() == null) {
+
+        String userAccount = request.getUserAccount() == null ? "" : request.getUserAccount().replaceAll("\\s+", "");
+        String password = request.getPassword() == null ? "" : request.getPassword().trim();
+
+        if (userAccount.isEmpty() || password.isEmpty()) {
             return ResponseResult.fail("账号密码不能为空");
         }
+
+        request.setUserAccount(userAccount);
+        request.setPassword(password);
 
         // 登录类型 1=用户 2=管理员
         if (1 == request.getType()) {
@@ -61,8 +68,8 @@ public class AuthServiceImpl implements AuthService {
     private ResponseResult userLogin(LoginRequest request) {
         // 根据 手机号 或 账号 查询
         Optional<User> userOptional = userRepository.findByUserAccountOrPhone(
-        request.getUserAccount(), 
-        request.getUserAccount()
+                request.getUserAccount(),
+                request.getUserAccount()
         );
         if (userOptional.isEmpty()) {
             return ResponseResult.fail("账号或密码错误");
@@ -138,26 +145,28 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseResult register(RegisterRequest request) {
 
-        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+        String phone = request.getPhone() == null ? "" : request.getPhone().replaceAll("\\s+", "");
+        String password = request.getPassword() == null ? "" : request.getPassword().trim();
+        String confirmPassword = request.getConfirmPassword() == null ? "" : request.getConfirmPassword().trim();
+
+        if (phone.isEmpty()) {
             return ResponseResult.fail("电话号码不能为空");
         }
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+        if (password.isEmpty()) {
             return ResponseResult.fail("密码不能为空");
         }
-        if (request.getConfirmPassword() == null || request.getConfirmPassword().trim().isEmpty()) {
+        if (confirmPassword.isEmpty()) {
             return ResponseResult.fail("确认密码不能为空");
         }
 
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
+        if (!password.equals(confirmPassword)) {
             return ResponseResult.fail("两次输入的密码不一致");
         }
 
-        if (request.getPhone().length() != 11) {
+        if (phone.length() != 11) {
             return ResponseResult.fail("手机号格式不正确");
         }
 
-        //密码规则：6-20位 + 字母+数字
-        String password = request.getPassword();
         if (password.length() < 6 || password.length() > 20) {
             return ResponseResult.fail("密码长度必须在6-20位之间");
         }
@@ -165,7 +174,7 @@ public class AuthServiceImpl implements AuthService {
             return ResponseResult.fail("密码必须是字母+数字的组合");
         }
 
-        if (userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(phone)) {
             return ResponseResult.fail("该手机号已注册，请直接登录");
         }
 
@@ -173,8 +182,8 @@ public class AuthServiceImpl implements AuthService {
 
         User user = new User();
         user.setUserAccount(userAccount);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(request.getPhone());
+        user.setPassword(passwordEncoder.encode(password));
+        user.setPhone(phone);
         user.setRole(request.getRole() != null ? request.getRole() : "1");
         user.setCreditScore(80);
         user.setStatus(1);
