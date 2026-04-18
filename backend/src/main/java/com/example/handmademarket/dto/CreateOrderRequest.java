@@ -1,6 +1,5 @@
 package com.example.handmademarket.dto;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class CreateOrderRequest {
