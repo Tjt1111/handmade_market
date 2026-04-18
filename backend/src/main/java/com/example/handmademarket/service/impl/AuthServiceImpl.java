@@ -25,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private static final String DEFAULT_PASSWORD = "a123456";
 
     public AuthServiceImpl(UserRepository userRepository, AdminRepository adminRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
@@ -197,5 +198,23 @@ public class AuthServiceImpl implements AuthService {
         map.put("userAccount", userAccount);
         map.put("token", token);
         return ResponseResult.ok("注册成功", map);
+    }
+
+    @Override
+    public ResponseResult resetPassword(String account, String code) {
+
+        String cleanAccount = account == null ? "" : account.replaceAll("\\s+", "");
+        
+        Optional<User> userOptional = userRepository.findByUserAccountOrPhone(cleanAccount, cleanAccount);
+        if (userOptional.isEmpty()) {
+            return ResponseResult.fail("账号不存在");
+        }
+
+        User user = userOptional.get();
+
+        user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+        userRepository.save(user);
+
+        return ResponseResult.ok("密码已重置为默认密码：a123456");
     }
 }

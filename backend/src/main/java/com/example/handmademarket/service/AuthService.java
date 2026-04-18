@@ -9,4 +9,6 @@ public interface AuthService {
     ResponseResult login(LoginRequest request);
 
     ResponseResult register(RegisterRequest request);
+    
+    ResponseResult resetPassword(String account, String code);
 }
