@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
 
     //用户登录
     private ResponseResult userLogin(LoginRequest request) {
-        // 根据 手机号 或 账号 查询
+        //根据 手机号 或 账号 查询
         Optional<User> userOptional = userRepository.findByUserAccountOrPhone(
                 request.getUserAccount(),
                 request.getUserAccount()
@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
             return ResponseResult.fail("账号或密码错误");
         }
         User user = userOptional.get();
-        // 判断是否锁定
+        //判断是否锁定
         if (user.getStatus() == 2) {
             long now = new Date().getTime();
             long lockTime = user.getLockTime().getTime();
@@ -90,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        // 校验密码
+        //校验密码
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             Integer errorCount = user.getPwdErrorCount();
             if (errorCount == null) {
@@ -108,7 +108,7 @@ public class AuthServiceImpl implements AuthService {
             return ResponseResult.fail("密码错误，剩余" + (5 - errorCount) + "次机会");
         }
 
-        // 登录成功：重置错误次数
+        //登录成功：重置错误次数
         user.setPwdErrorCount(0);
         user.setLastLoginTime(new Date());
         userRepository.save(user);

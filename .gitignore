@@ -26,5 +26,4 @@ dist-ssr
 #target
 target/
 backend/target/
-
 *.properties
