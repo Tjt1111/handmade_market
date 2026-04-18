@@ -51,6 +51,12 @@ public class User {
     @Column(name = "status")
     private Integer status;
 
+    @Column(name = "lock_time")
+    private LocalDateTime lockTime;
+
+    @Column(name = "pwd_error_count")
+    private Integer pwdErrorCount;
+
     // Getters and Setters
 
     public Long getUser_id() { return user_id; }
@@ -94,4 +100,10 @@ public class User {
 
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+
+    public LocalDateTime getLockTime() { return lockTime; }
+    public void setLockTime(LocalDateTime lockTime) { this.lockTime = lockTime; }
+
+    public Integer getPwdErrorCount() { return pwdErrorCount; }
+    public void setPwdErrorCount(Integer pwdErrorCount) { this.pwdErrorCount = pwdErrorCount; }
 }

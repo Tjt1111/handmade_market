@@ -1,5 +1,7 @@
 package com.example.handmademarket.config;
 
+import org.springframework.security.config.Customizer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,10 +20,6 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-<<<<<<< HEAD
-                        // 所有请求在测试期间都不需要认证
-=======
->>>>>>> my111
                         .anyRequest().permitAll()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable());

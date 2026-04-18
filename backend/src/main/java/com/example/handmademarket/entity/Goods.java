@@ -55,7 +55,8 @@ public class Goods {
     @Column(name = "audit_remark", length = 200)
     private String auditRemark;
 
-    // TODO: add seller reference, audit status, tags, and detail fields
+    @Column(name = "images")
+    private String imageUrl;
 
     public Long getId() {
         return id;
@@ -64,6 +65,21 @@ public class Goods {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public Integer getCreatorId() { return creatorId; }
+    public void setCreatorId(Integer creatorId) { this.creatorId = creatorId; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Double getReservePrice() { return reservePrice; }
+    public void setReservePrice(Double reservePrice) { this.reservePrice = reservePrice; }
+
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
 
     public String getSize() { return size; }
     public void setSize(String size) { this.size = size; }

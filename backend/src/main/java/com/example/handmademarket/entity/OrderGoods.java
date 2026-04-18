@@ -13,11 +13,7 @@ public class OrderGoods {
     @Column(name = "og_id")
     private Integer ogId;
 
-<<<<<<< HEAD
-    @Column(name = "order_id", length = 50, nullable = false)
-=======
     @Column(name = "order_id", nullable = false, length = 50)
->>>>>>> my111
     private String orderId;
 
     @Column(name = "goods_id", nullable = false)

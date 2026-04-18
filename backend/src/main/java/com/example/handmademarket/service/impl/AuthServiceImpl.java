@@ -34,25 +34,16 @@ public class AuthServiceImpl implements AuthService {
         this.jwtUtil = jwtUtil;
     }
 
-    // 生成唯一账号
-    private String generateUniqueUserAccount() {
-        String userAccount;
-        do {
-            userAccount = "user" + System.currentTimeMillis();
-        } while (userRepository.existsByUserAccount(userAccount));
-        return userAccount;
-    }
-
     @Override
     public ResponseResult login(LoginRequest request) {
-        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+        if (request.getUserAccount() == null || request.getUserAccount().trim().isEmpty()) {
             return ResponseResult.fail("用户名不能为空");
         }
         if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             return ResponseResult.fail("密码不能为空");
         }
 
-        Optional<User> userOptional = userRepository.findByUserAccount(request.getUsername());
+        Optional<User> userOptional = userRepository.findByUserAccount(request.getUserAccount());
         if (userOptional.isEmpty()) {
             return ResponseResult.fail("账号或密码错误");
         }
@@ -67,15 +58,16 @@ public class AuthServiceImpl implements AuthService {
             }
             user.setPwdErrorCount(errorCount);
 
-            if (errorCount >= 5) { // 5次错误锁定
+            if (errorCount >= 5) {
                 user.setStatus(2);
-                user.setLockTime(new Date());
+                user.setLockTime(LocalDateTime.now());
             }
             userRepository.save(user);
             return ResponseResult.fail("密码错误，剩余" + (5 - errorCount) + "次机会");
         }
 
-        // 更新最后登录时间
+        // 登录成功，重置错误计数
+        user.setPwdErrorCount(0);
         user.setLastLoginTime(LocalDateTime.now());
         userRepository.save(user);
 
@@ -93,20 +85,19 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseResult register(RegisterRequest request) {
-        // 验证输入
-        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+        if (request.getUserAccount() == null || request.getUserAccount().trim().isEmpty()) {
             return ResponseResult.fail("用户名不能为空");
         }
-        if (password.isEmpty()) {
+        if (request.getPassword() == null || request.getPassword().isEmpty()) {
             return ResponseResult.fail("密码不能为空");
         }
 
-        if (userRepository.existsByUserAccount(request.getUsername())) {
+        if (userRepository.existsByUserAccount(request.getUserAccount())) {
             return ResponseResult.fail("用户名已存在");
         }
 
         User user = new User();
-        user.setUserAccount(request.getUsername());
+        user.setUserAccount(request.getUserAccount());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
@@ -117,6 +108,20 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
-        return ResponseResult.ok("密码已重置为默认密码：a123456");
+        return ResponseResult.ok("注册成功");
+    }
+
+    @Override
+    public ResponseResult resetPassword(String account, String code) {
+        Optional<User> userOptional = userRepository.findByUserAccount(account);
+        if (userOptional.isEmpty()) {
+            return ResponseResult.fail("账号不存在");
+        }
+        User user = userOptional.get();
+        user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+        user.setPwdErrorCount(0);
+        user.setStatus(1);
+        userRepository.save(user);
+        return ResponseResult.ok("密码已重置为默认密码：" + DEFAULT_PASSWORD);
     }
 }

@@ -6,22 +6,16 @@ import com.example.handmademarket.entity.*;
 import com.example.handmademarket.repository.*;
 import com.example.handmademarket.service.OrderService;
 import com.example.handmademarket.util.ResponseResult;
-<<<<<<< HEAD
-=======
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.jpa.domain.Specification;
->>>>>>> my111
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-<<<<<<< HEAD
-=======
 import java.time.LocalDate;
->>>>>>> my111
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -62,8 +56,6 @@ public class OrderServiceImpl implements OrderService {
         };
     }
 
-<<<<<<< HEAD
-=======
     // 支付状态映射
     private String paymentStatusToString(Integer paymentStatus) {
         if (paymentStatus == null) return "unpaid";
@@ -78,7 +70,6 @@ public class OrderServiceImpl implements OrderService {
         };
     }
 
->>>>>>> my111
     // 生成订单号：HM + 日期 + 4位随机数
     private String generateOrderId() {
         String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
@@ -93,12 +84,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-<<<<<<< HEAD
-    public ResponseResult getBuyerOrders(String username) {
-        User user = getUserByUsername(username);
-        List<Order> orders = orderRepository.findByBuyerIdOrderByCreateTimeDesc(
-                user.getUser_id().intValue());
-=======
     public ResponseResult getBuyerOrders(String username, Integer status) {
         User user = getUserByUsername(username);
         Integer userId = user.getUser_id().intValue();
@@ -109,7 +94,6 @@ public class OrderServiceImpl implements OrderService {
         } else {
             orders = orderRepository.findByBuyerIdOrderByCreateTimeDesc(userId);
         }
->>>>>>> my111
 
         List<Map<String, Object>> result = orders.stream().map(order -> {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -118,13 +102,10 @@ public class OrderServiceImpl implements OrderService {
             map.put("time", order.getCreateTime() != null
                     ? order.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "");
             map.put("status", statusToString(order.getStatus()));
-<<<<<<< HEAD
-=======
             map.put("statusText", statusToChinese(order.getStatus()));
             map.put("orderType", order.getOrderType() != null && order.getOrderType() == 2 ? "定制订单" : "普通订单");
             map.put("payType", order.getPayType());
             map.put("paymentStatus", paymentStatusToString(order.getPaymentStatus()));
->>>>>>> my111
 
             // 获取订单商品
             List<OrderGoods> goodsList = orderGoodsRepository.findByOrderId(order.getOrderId());
@@ -145,11 +126,6 @@ public class OrderServiceImpl implements OrderService {
             }
 
             map.put("total", order.getAmount());
-<<<<<<< HEAD
-            // 检查是否已评价
-            map.put("commented", evaluationRepository.existsByOrderId(order.getOrderId()));
-
-=======
             map.put("deposit", order.getDeposit());
             map.put("balance", order.getBalance());
             map.put("address", order.getDeliveryAddress());
@@ -168,7 +144,6 @@ public class OrderServiceImpl implements OrderService {
                         });
             }
 
->>>>>>> my111
             return map;
         }).collect(Collectors.toList());
 
@@ -176,12 +151,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-<<<<<<< HEAD
-    public ResponseResult getSellerOrders(String username) {
-        User user = getUserByUsername(username);
-        List<Order> orders = orderRepository.findBySellerIdOrderByCreateTimeDesc(
-                user.getUser_id().intValue());
-=======
     public ResponseResult getSellerOrders(String username, Integer status) {
         User user = getUserByUsername(username);
         Integer userId = user.getUser_id().intValue();
@@ -192,19 +161,12 @@ public class OrderServiceImpl implements OrderService {
         } else {
             orders = orderRepository.findBySellerIdOrderByCreateTimeDesc(userId);
         }
->>>>>>> my111
 
         List<Map<String, Object>> result = orders.stream().map(order -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", order.getOrderId());
             map.put("no", order.getOrderId());
             map.put("status", statusToString(order.getStatus()));
-<<<<<<< HEAD
-            map.put("amount", order.getAmount());
-            map.put("time", order.getCreateTime() != null
-                    ? order.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "");
-            map.put("address", order.getDeliveryAddress());
-=======
             map.put("statusText", statusToChinese(order.getStatus()));
             map.put("orderType", order.getOrderType() != null && order.getOrderType() == 2 ? "定制订单" : "普通订单");
             map.put("amount", order.getAmount());
@@ -220,19 +182,14 @@ public class OrderServiceImpl implements OrderService {
             map.put("logisticsInfo", order.getLogisticsInfo());
             map.put("cancelReason", order.getCancelReason());
             map.put("remark", order.getRemark());
->>>>>>> my111
 
             // 获取买家信息
             if (order.getBuyerId() != null) {
                 userRepository.findById(order.getBuyerId().longValue())
-<<<<<<< HEAD
-                        .ifPresent(buyer -> map.put("buyer", buyer.getUserName() != null ? buyer.getUserName() : buyer.getUserAccount()));
-=======
                         .ifPresent(buyer -> {
                             map.put("buyer", buyer.getUserName() != null ? buyer.getUserName() : buyer.getUserAccount());
                             map.put("buyerPhone", buyer.getPhone());
                         });
->>>>>>> my111
             }
 
             // 获取订单商品
@@ -251,12 +208,9 @@ public class OrderServiceImpl implements OrderService {
                 map.put("image", "");
             }
 
-<<<<<<< HEAD
-=======
             // 评价信息
             map.put("commented", evaluationRepository.existsByOrderId(order.getOrderId()));
 
->>>>>>> my111
             return map;
         }).collect(Collectors.toList());
 
@@ -283,35 +237,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public ResponseResult getAllOrders() {
         List<Order> orders = orderRepository.findAllByOrderByCreateTimeDesc();
-<<<<<<< HEAD
-
-        List<Map<String, Object>> result = orders.stream().map(order -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", order.getOrderId());
-            map.put("no", order.getOrderId());
-            map.put("amount", order.getAmount());
-            map.put("status", statusToString(order.getStatus()));
-            map.put("time", order.getCreateTime() != null
-                    ? order.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "");
-            map.put("address", order.getDeliveryAddress());
-
-            // 买家信息
-            if (order.getBuyerId() != null) {
-                userRepository.findById(order.getBuyerId().longValue())
-                        .ifPresent(buyer -> map.put("buyer", buyer.getUserName() != null ? buyer.getUserName() : buyer.getUserAccount()));
-            }
-            // 卖家信息
-            if (order.getSellerId() != null) {
-                userRepository.findById(order.getSellerId().longValue())
-                        .ifPresent(seller -> map.put("seller", seller.getUserName() != null ? seller.getUserName() : seller.getUserAccount()));
-            }
-
-            return map;
-        }).collect(Collectors.toList());
-
-=======
         List<Map<String, Object>> result = orders.stream().map(this::buildAdminOrderMap).collect(Collectors.toList());
->>>>>>> my111
         return ResponseResult.ok(result);
     }
 
@@ -404,17 +330,6 @@ public class OrderServiceImpl implements OrderService {
         map.put("id", order.getOrderId());
         map.put("no", order.getOrderId());
         map.put("status", statusToString(order.getStatus()));
-<<<<<<< HEAD
-        map.put("amount", order.getAmount());
-        map.put("address", order.getDeliveryAddress());
-        map.put("createTime", order.getCreateTime());
-        map.put("payTime", order.getPayTime());
-        map.put("deliveryTime", order.getDeliveryTime());
-        map.put("receiveTime", order.getReceiveTime());
-        map.put("logisticsInfo", order.getLogisticsInfo());
-        map.put("remark", order.getRemark());
-
-=======
         map.put("orderType", order.getOrderType() != null && order.getOrderType() == 2 ? "定制订单" : "普通订单");
         map.put("amount", order.getAmount());
         map.put("deposit", order.getDeposit());
@@ -451,7 +366,6 @@ public class OrderServiceImpl implements OrderService {
                     });
         }
 
->>>>>>> my111
         // 订单商品
         List<OrderGoods> goodsList = orderGoodsRepository.findByOrderId(orderId);
         List<Map<String, Object>> items = goodsList.stream().map(og -> {
@@ -483,16 +397,6 @@ public class OrderServiceImpl implements OrderService {
             return ResponseResult.fail("订单状态不允许支付");
         }
 
-<<<<<<< HEAD
-        order.setStatus(1); // 已支付
-        order.setPayTime(LocalDateTime.now());
-        if (payType != null && !payType.isBlank()) {
-            order.setPayType(payType);
-        }
-        orderRepository.save(order);
-
-        return ResponseResult.ok("支付成功");
-=======
         // 验证支付方式
         if (payType == null || payType.isBlank()) {
             payType = "模拟支付宝"; // 默认
@@ -755,7 +659,6 @@ public class OrderServiceImpl implements OrderService {
         data.put("imageUrl", imageUrl);
         data.put("message", "实物图上传成功");
         return ResponseResult.ok("上传成功", data);
->>>>>>> my111
     }
 
     @Override
@@ -768,11 +671,7 @@ public class OrderServiceImpl implements OrderService {
         if (!order.getSellerId().equals(user.getUser_id().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
-<<<<<<< HEAD
-        if (order.getStatus() != 1) {
-=======
         if (order.getStatus() != 1 && order.getStatus() != 2) {
->>>>>>> my111
             return ResponseResult.fail("订单状态不允许发货");
         }
 
@@ -809,11 +708,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-<<<<<<< HEAD
-    public ResponseResult cancelOrder(String username, String orderId) {
-=======
     public ResponseResult cancelOrder(String username, String orderId, String cancelReason) {
->>>>>>> my111
         User user = getUserByUsername(username);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
@@ -827,13 +722,10 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(5); // 已取消
-<<<<<<< HEAD
-=======
         order.setPaymentStatus(0); // 未支付
         if (cancelReason != null && !cancelReason.isBlank()) {
             order.setCancelReason(cancelReason);
         }
->>>>>>> my111
         orderRepository.save(order);
 
         return ResponseResult.ok("订单已取消");
@@ -875,8 +767,6 @@ public class OrderServiceImpl implements OrderService {
 
         return ResponseResult.ok("评价成功");
     }
-<<<<<<< HEAD
-=======
 
     // ==================== 管理员订单管理 ====================
 
@@ -1178,5 +1068,4 @@ public class OrderServiceImpl implements OrderService {
 
         return map;
     }
->>>>>>> my111
 }
