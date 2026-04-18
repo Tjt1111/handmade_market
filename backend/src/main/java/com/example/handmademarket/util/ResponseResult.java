@@ -2,6 +2,7 @@ package com.example.handmademarket.util;
 
 public class ResponseResult {
 
+    private int code;
     private boolean success;
     private String message;
     private Object data;
@@ -9,18 +10,31 @@ public class ResponseResult {
     public ResponseResult() {
     }
 
-    public ResponseResult(boolean success, String message, Object data) {
+    public ResponseResult(int code, boolean success, String message, Object data) {
+        this.code = code;
         this.success = success;
         this.message = message;
         this.data = data;
     }
 
     public static ResponseResult ok(Object data) {
-        return new ResponseResult(true, "OK", data);
+        return new ResponseResult(200, true, "OK", data);
+    }
+
+    public static ResponseResult ok(String message, Object data) {
+        return new ResponseResult(200, true, message, data);
     }
 
     public static ResponseResult fail(String message) {
-        return new ResponseResult(false, message, null);
+        return new ResponseResult(400, false, message, null);
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
     }
 
     public boolean isSuccess() {

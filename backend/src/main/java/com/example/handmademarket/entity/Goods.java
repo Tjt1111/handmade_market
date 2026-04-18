@@ -1,24 +1,44 @@
 package com.example.handmademarket.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "goods")
+@Table(name = "tb_goods")
 public class Goods {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "goods_id")
     private Long id;
 
-    private String title;
-    private String description;
-    private String category;
-    private Double price;
-    private Integer stock;
-    private String imageUrl;
-    private String status;
+    @Column(name = "creator_id")
+    private Integer creatorId;
 
-    // TODO: add seller reference, audit status, tags, and detail fields
+    @Column(name = "goods_name")
+    private String title;
+
+    @Column(name = "details")
+    private String description;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "price")
+    private Double price;
+
+    @Column(name = "images")
+    private String imageUrl;
+
+    @Column(name = "status")
+    private Integer status;
+
+    public Integer getCreatorId() { return creatorId; }
+    public void setCreatorId(Integer creatorId) { this.creatorId = creatorId; }
 
     public Long getId() {
         return id;
@@ -60,14 +80,6 @@ public class Goods {
         this.price = price;
     }
 
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
     public String getImageUrl() {
         return imageUrl;
     }
@@ -76,11 +88,11 @@ public class Goods {
         this.imageUrl = imageUrl;
     }
 
-    public String getStatus() {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 }

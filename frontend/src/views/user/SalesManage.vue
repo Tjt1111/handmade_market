@@ -64,7 +64,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 const activeTab = ref('all')
 
@@ -77,53 +78,40 @@ const tabs = [
 ]
 
 const stats = ref({
-  totalSales: 8940,
-  totalOrders: 45,
-  pendingOrders: 3,
-  totalGoods: 12
+  totalSales: 0,
+  totalOrders: 0,
+  pendingOrders: 0,
+  totalGoods: 0
 })
 
-const orders = ref([
-  { 
-    id: 1, 
-    no: 'HM202412010001', 
-    buyer: '张三', 
-    name: '青花瓷茶杯', 
-    price: 198, 
-    quantity: 1, 
-    amount: 198, 
-    status: 'paid', 
-    time: '2024-12-01',
-    image: 'https://picsum.photos/id/30/60/60', 
-    address: '北京市朝阳区xxx街道xxx号'
-  },
-  { 
-    id: 2, 
-    no: 'HM202412010002', 
-    buyer: '李四', 
-    name: '手工编织包', 
-    price: 299, 
-    quantity: 1, 
-    amount: 299, 
-    status: 'pending', 
-    time: '2024-12-01',
-    image: 'https://picsum.photos/id/31/60/60', 
-    address: '上海市浦东新区xxx路xxx号'
-  },
-  { 
-    id: 3, 
-    no: 'HM202411300003', 
-    buyer: '王五', 
-    name: '黄杨木雕', 
-    price: 399, 
-    quantity: 1, 
-    amount: 399, 
-    status: 'shipped', 
-    time: '2024-11-30',
-    image: 'https://picsum.photos/id/32/60/60', 
-    address: '广州市天河区xxx街xxx号'
+const orders = ref([])
+
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+})
+
+const fetchStats = async () => {
+  try {
+    const res = await axios.get('/api/seller/stats', authHeaders())
+    if (res.data.code === 200) {
+      stats.value = res.data.data
+    }
+  } catch (err) {
+    console.error('获取统计失败', err)
   }
-])
+}
+
+const fetchOrders = async () => {
+  try {
+    const res = await axios.get('/api/seller/orders', authHeaders())
+    if (res.data.code === 200) {
+      orders.value = res.data.data
+    }
+  } catch (err) {
+    console.error('获取订单失败', err)
+    orders.value = []
+  }
+}
 
 const getCount = (status) => {
   if (status === 'all') return orders.value.length
@@ -140,16 +128,29 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 
-const shipOrder = (order) => {
-  if (confirm(`确认发货订单 ${order.no} 吗？`)) {
-    order.status = 'shipped'
-    alert('发货成功')
+const shipOrder = async (order) => {
+  if (!confirm(`确认发货订单 ${order.no} 吗？`)) return
+  try {
+    const res = await axios.put(`/api/orders/${order.no}/ship`, {}, authHeaders())
+    if (res.data.code === 200) {
+      order.status = 'shipped'
+      alert('发货成功')
+    } else {
+      alert(res.data.message || '发货失败')
+    }
+  } catch (err) {
+    alert('发货失败：' + (err.response?.data?.message || err.message))
   }
 }
 
 const remindPayment = (order) => {
   alert(`已向买家发送支付提醒`)
 }
+
+onMounted(() => {
+  fetchStats()
+  fetchOrders()
+})
 </script>
 
 <style scoped>

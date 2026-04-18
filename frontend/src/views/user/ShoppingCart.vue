@@ -56,6 +56,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { requireTransactionAuth } from '@/utils/auth'
+import axios from 'axios'
 
 const router = useRouter()
 
@@ -131,21 +132,43 @@ const removeItem = (item) => {
 
 // 去结算
 const checkout = () => {
-  requireTransactionAuth(router, () => {
+  requireTransactionAuth(router, async () => {
     const selectedItems = cartItems.value.filter(item => item.selected)
     if (selectedItems.length === 0) {
       alert('请选择要结算的商品')
       return
     }
-    
-    const totalAmount = totalPrice.value
-    alert(`结算商品：${selectedCount.value}件，总金额：¥${totalAmount.toFixed(2)}\n\n跳转到订单确认页面`)
-    
-    // 清空已结算的购物车商品
-    const remainingItems = cartItems.value.filter(item => !item.selected)
-    cartItems.value = remainingItems
-    saveCart()
-    updateSelected()
+
+    const address = prompt('请输入收货地址：')
+    if (!address) return
+
+    try {
+      const res = await axios.post('/api/orders', {
+        items: selectedItems.map(item => ({
+          goodsId: item.id,
+          quantity: item.quantity,
+          spec: item.spec || '标准款'
+        })),
+        deliveryAddress: address,
+        payType: '模拟支付宝'
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+
+      if (res.data.code === 200) {
+        alert('订单创建成功！')
+        // 清空已结算的购物车商品
+        const remainingItems = cartItems.value.filter(item => !item.selected)
+        cartItems.value = remainingItems
+        saveCart()
+        updateSelected()
+        router.push('/user/orders')
+      } else {
+        alert(res.data.message || '创建订单失败')
+      }
+    } catch (err) {
+      alert('创建订单失败：' + (err.response?.data?.message || err.message))
+    }
   })
 }
 

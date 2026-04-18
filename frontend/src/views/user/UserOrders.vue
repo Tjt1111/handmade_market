@@ -52,9 +52,62 @@ const getCount = (status) => status === 'all' ? orders.value.length : orders.val
 const filteredOrders = computed(() => activeTab.value === 'all' ? orders.value : orders.value.filter(o => o.status === activeTab.value))
 const getStatusText = (s) => ({ pending: '待支付', paid: '已支付', shipped: '已发货', completed: '已完成' }[s])
 
-const payOrder = (order) => alert(`支付订单 ${order.no}`)
-const confirmReceipt = (order) => { order.status = 'completed'; alert('确认收货成功') }
-const commentOrder = (order) => alert(`评价订单 ${order.no}`)
+const payOrder = async (order) => {
+  if (!confirm(`确认支付订单 ${order.no}，金额 ¥${order.total}？`)) return
+  try {
+    const res = await axios.put(`/api/orders/${order.no}/pay`, { payType: '模拟支付宝' }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.data.code === 200) {
+      order.status = 'paid'
+      alert('支付成功')
+    } else {
+      alert(res.data.message || '支付失败')
+    }
+  } catch (err) {
+    alert('支付失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+const confirmReceipt = async (order) => {
+  if (!confirm('确认已收到商品？')) return
+  try {
+    const res = await axios.put(`/api/orders/${order.no}/confirm`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.data.code === 200) {
+      order.status = 'completed'
+      alert('确认收货成功')
+    } else {
+      alert(res.data.message || '操作失败')
+    }
+  } catch (err) {
+    alert('操作失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+const commentOrder = async (order) => {
+  const score = prompt('请给订单评分（1-5）：')
+  if (!score) return
+  const content = prompt('请输入评价内容：')
+  if (!content) return
+  try {
+    const res = await axios.post(`/api/orders/${order.no}/evaluate`, {
+      score: parseInt(score),
+      content: content
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.data.code === 200) {
+      order.commented = true
+      alert('评价成功')
+    } else {
+      alert(res.data.message || '评价失败')
+    }
+  } catch (err) {
+    alert('评价失败：' + (err.response?.data?.message || err.message))
+  }
+}
 
 onMounted(() => {
   fetchOrders()

@@ -1,12 +1,20 @@
 package com.example.handmademarket.repository;
 
-import com.example.handmademarket.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.handmademarket.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByUsername(String username);
+    Optional<User> findByUserAccount(String useraccount);
 
-    boolean existsByUsername(String username);
+    boolean existsByUserAccount(String useraccount);
+
+    Optional<User> findByPhone(String phone);
+
+    boolean existsByPhone(String phone);
+
+    Optional<User> findByUserAccountOrPhone(String userAccount, String phone);
 }

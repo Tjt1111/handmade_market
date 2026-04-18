@@ -1,73 +1,121 @@
 package com.example.handmademarket.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "tb_order")
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "order_id", length = 50)
+    private String orderId;
 
-    private Long userId;
-    private LocalDateTime createdAt;
-    private String status;
-    private Double totalAmount;
+    @Column(name = "buyer_id")
+    private Integer buyerId;
 
-    @ElementCollection
-    @CollectionTable(name = "order_items", joinColumns = @JoinColumn(name = "order_id"))
-    private List<String> items;
+    @Column(name = "seller_id")
+    private Integer sellerId;
 
-    // TODO: replace items with proper order item entity and address relation
+    @Column(name = "goods_id")
+    private Integer goodsId;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "custom_id")
+    private Integer customId;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "order_type")
+    private Integer orderType;
 
-    public Long getUserId() {
-        return userId;
-    }
+    @Column(name = "amount")
+    private BigDecimal amount;
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    @Column(name = "deposit")
+    private BigDecimal deposit;
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    @Column(name = "balance")
+    private BigDecimal balance;
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
 
-    public String getStatus() {
-        return status;
-    }
+    @Column(name = "logistics_info")
+    private String logisticsInfo;
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    @Column(name = "create_time")
+    private LocalDateTime createTime;
 
-    public Double getTotalAmount() {
-        return totalAmount;
-    }
+    @Column(name = "pay_time")
+    private LocalDateTime payTime;
 
-    public void setTotalAmount(Double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    @Column(name = "delivery_time")
+    private LocalDateTime deliveryTime;
 
-    public List<String> getItems() {
-        return items;
-    }
+    @Column(name = "receive_time")
+    private LocalDateTime receiveTime;
 
-    public void setItems(List<String> items) {
-        this.items = items;
-    }
+    @Column(name = "pay_type")
+    private String payType;
+
+    @Column(name = "status")
+    private Integer status;
+
+    @Column(name = "remark")
+    private String remark;
+
+    // Getters and Setters
+
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
+
+    public Integer getBuyerId() { return buyerId; }
+    public void setBuyerId(Integer buyerId) { this.buyerId = buyerId; }
+
+    public Integer getSellerId() { return sellerId; }
+    public void setSellerId(Integer sellerId) { this.sellerId = sellerId; }
+
+    public Integer getGoodsId() { return goodsId; }
+    public void setGoodsId(Integer goodsId) { this.goodsId = goodsId; }
+
+    public Integer getCustomId() { return customId; }
+    public void setCustomId(Integer customId) { this.customId = customId; }
+
+    public Integer getOrderType() { return orderType; }
+    public void setOrderType(Integer orderType) { this.orderType = orderType; }
+
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+
+    public BigDecimal getDeposit() { return deposit; }
+    public void setDeposit(BigDecimal deposit) { this.deposit = deposit; }
+
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+
+    public String getDeliveryAddress() { return deliveryAddress; }
+    public void setDeliveryAddress(String deliveryAddress) { this.deliveryAddress = deliveryAddress; }
+
+    public String getLogisticsInfo() { return logisticsInfo; }
+    public void setLogisticsInfo(String logisticsInfo) { this.logisticsInfo = logisticsInfo; }
+
+    public LocalDateTime getCreateTime() { return createTime; }
+    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+
+    public LocalDateTime getPayTime() { return payTime; }
+    public void setPayTime(LocalDateTime payTime) { this.payTime = payTime; }
+
+    public LocalDateTime getDeliveryTime() { return deliveryTime; }
+    public void setDeliveryTime(LocalDateTime deliveryTime) { this.deliveryTime = deliveryTime; }
+
+    public LocalDateTime getReceiveTime() { return receiveTime; }
+    public void setReceiveTime(LocalDateTime receiveTime) { this.receiveTime = receiveTime; }
+
+    public String getPayType() { return payType; }
+    public void setPayType(String payType) { this.payType = payType; }
+
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
+
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 }

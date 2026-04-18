@@ -8,17 +8,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 const searchOrderNo = ref('')
 const filterStatus = ref('all')
 const showDetailModal = ref(false)
 const currentOrder = ref({})
 
-const orders = ref([
-  { id: 1, no: 'HM202412010001', buyer: '张三', seller: '陶瓷匠人', amount: 198, status: 'paid', time: '2024-12-01', address: '北京市朝阳区xxx' },
-  { id: 2, no: 'HM202412010002', buyer: '李四', seller: '编织达人', amount: 299, status: 'pending', time: '2024-12-01', address: '上海市浦东新区xxx' }
-])
+const orders = ref([])
+
+const fetchOrders = async () => {
+  try {
+    const res = await axios.get('/api/admin/orders', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.data.code === 200) {
+      orders.value = res.data.data
+    }
+  } catch (err) {
+    console.error('获取订单失败', err)
+    orders.value = []
+  }
+}
 
 const filteredOrders = computed(() => {
   let result = orders.value
@@ -28,6 +40,10 @@ const filteredOrders = computed(() => {
 })
 
 const viewDetail = (order) => { currentOrder.value = order; showDetailModal.value = true }
+
+onMounted(() => {
+  fetchOrders()
+})
 </script>
 
 <style scoped>
