@@ -67,6 +67,24 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getSellerStats(username));
     }
 
+    /** 统一交易管理：获取用户所有订单（买家+卖家，支持按角色和状态筛选） */
+    @GetMapping("/user/all-orders")
+    public ResponseEntity<ResponseResult> getAllUserOrders(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String role) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.getAllUserOrders(username, status, role));
+    }
+
+    /** 统一交易管理：获取交易统计（买+卖） */
+    @GetMapping("/user/trade-stats")
+    public ResponseEntity<ResponseResult> getTradeStats(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.getTradeStats(username));
+    }
+
     /** 管理员：获取所有订单 */
     @GetMapping("/admin/orders")
     public ResponseEntity<ResponseResult> getAllOrders() {
@@ -113,15 +131,133 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAdminOrderStats());
     }
 
-    @PostMapping
-    public ResponseEntity<ResponseResult> createOrder() {
-        // TODO: implement create order logic
-        return ResponseEntity.ok(ResponseResult.ok("创建订单接口骨架"));
+    /** 创建订单（从购物车结算） */
+    @PostMapping("/orders")
+    public ResponseEntity<ResponseResult> createOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody CreateOrderRequest request) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.createOrder(username, request));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseResult> getOrder(@PathVariable Long id) {
-        // TODO: implement order detail
-        return ResponseEntity.ok(ResponseResult.ok("订单详情接口骨架"));
+    /** 订单详情 */
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<ResponseResult> getOrderDetail(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.getOrderDetail(username, orderId));
+    }
+
+    /** 支付订单（模拟支付） */
+    @PutMapping("/orders/{orderId}/pay")
+    public ResponseEntity<ResponseResult> payOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String payType = body != null ? body.get("payType") : null;
+        return ResponseEntity.ok(orderService.payOrder(username, orderId, payType));
+    }
+
+    /** 支付定制订单尾款 */
+    @PutMapping("/orders/{orderId}/pay-balance")
+    public ResponseEntity<ResponseResult> payBalance(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String payType = body != null ? body.get("payType") : null;
+        return ResponseEntity.ok(orderService.payBalance(username, orderId, payType));
+    }
+
+    /** 创作者申请尾款支付 */
+    @PutMapping("/orders/{orderId}/request-balance")
+    public ResponseEntity<ResponseResult> requestBalancePayment(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.requestBalancePayment(username, orderId));
+    }
+
+    /** 卖家发货 */
+    @PutMapping("/orders/{orderId}/ship")
+    public ResponseEntity<ResponseResult> shipOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String logisticsInfo = body != null ? body.get("logisticsInfo") : null;
+        return ResponseEntity.ok(orderService.shipOrder(username, orderId, logisticsInfo));
+    }
+
+    /** 买家确认收货 */
+    @PutMapping("/orders/{orderId}/confirm")
+    public ResponseEntity<ResponseResult> confirmReceipt(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.confirmReceipt(username, orderId));
+    }
+
+    /** 取消订单 */
+    @PutMapping("/orders/{orderId}/cancel")
+    public ResponseEntity<ResponseResult> cancelOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String cancelReason = body != null ? body.get("cancelReason") : null;
+        return ResponseEntity.ok(orderService.cancelOrder(username, orderId, cancelReason));
+    }
+
+    /** 评价订单 */
+    @PostMapping("/orders/{orderId}/evaluate")
+    public ResponseEntity<ResponseResult> evaluateOrder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody EvaluationRequest request) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.evaluateOrder(username, orderId, request));
+    }
+
+    /** 重新下单（基于已取消订单） */
+    @PostMapping("/orders/{orderId}/reorder")
+    public ResponseEntity<ResponseResult> reorder(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.reorder(username, orderId));
+    }
+
+    /** 提醒买家支付 */
+    @PutMapping("/orders/{orderId}/remind-payment")
+    public ResponseEntity<ResponseResult> remindPayment(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId) {
+        String username = extractUsername(authHeader);
+        return ResponseEntity.ok(orderService.remindPayment(username, orderId));
+    }
+
+    /** 上传定制订单实物图 */
+    @PutMapping("/orders/{orderId}/upload-image")
+    public ResponseEntity<ResponseResult> uploadProductImage(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String imageUrl = body != null ? body.get("imageUrl") : null;
+        return ResponseEntity.ok(orderService.uploadProductImage(username, orderId, imageUrl));
+    }
+
+    /** 买家申请维权 */
+    @PutMapping("/orders/{orderId}/dispute")
+    public ResponseEntity<ResponseResult> applyDispute(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String orderId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String username = extractUsername(authHeader);
+        String reason = body != null ? body.get("reason") : null;
+        return ResponseEntity.ok(orderService.applyDispute(username, orderId, reason));
     }
 }

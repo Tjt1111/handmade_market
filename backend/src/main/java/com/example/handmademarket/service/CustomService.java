@@ -5,31 +5,31 @@ import com.example.handmademarket.util.ResponseResult;
 
 public interface CustomService {
 
-    /** 消费者：提交定制需求 */
+    /** 提交定制需求（需求方） */
     ResponseResult submitCustom(String username, CustomRequest request);
 
-    /** 消费者：查看我的定制需求列表 */
+    /** 查看我提交的定制需求列表（需求方） */
     ResponseResult getMyCustoms(String username);
 
-    /** 消费者：取消定制需求 */
+    /** 取消定制需求（需求方） */
     ResponseResult cancelCustom(String username, Integer customId);
 
-    /** 消费者：确认定制完成（创作者交付后） */
+    /** 确认定制完成（需求方，接单方交付后） */
     ResponseResult confirmCustom(String username, Integer customId, String deliveryAddress);
 
-    /** 创作者：查看可接单的定制需求（待匹配+与自己品类匹配） */
+    /** 查看可接单的定制需求（接单方） */
     ResponseResult getAvailableCustoms(String username);
 
-    /** 创作者：查看我接的定制单 */
+    /** 查看我接的定制单（接单方） */
     ResponseResult getMyAcceptedCustoms(String username);
 
-    /** 创作者：接受定制需求 */
+    /** 接受定制需求（接单方，含报价） */
     ResponseResult acceptCustom(String username, Integer customId, java.math.BigDecimal quotedPrice);
 
-    /** 创作者：拒绝定制需求 */
+    /** 拒绝定制需求（接单方） */
     ResponseResult rejectCustom(String username, Integer customId, String reason);
 
-    /** 创作者：交付定制作品 */
+    /** 交付定制作品（接单方） */
     ResponseResult deliverCustom(String username, Integer customId, String deliverContent);
 
     /** 查看定制需求详情 */

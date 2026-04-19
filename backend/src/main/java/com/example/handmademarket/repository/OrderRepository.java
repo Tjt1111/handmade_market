@@ -34,4 +34,13 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o WHERE o.sellerId = :sellerId AND o.status >= 1")
     BigDecimal sumAmountBySellerId(@Param("sellerId") Integer sellerId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.buyerId = :buyerId")
+    long countByBuyerId(@Param("buyerId") Integer buyerId);
+
+    @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o WHERE o.buyerId = :buyerId AND o.status >= 1")
+    BigDecimal sumAmountByBuyerId(@Param("buyerId") Integer buyerId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.buyerId = :buyerId AND o.status = :status")
+    long countByBuyerIdAndStatus(@Param("buyerId") Integer buyerId, @Param("status") Integer status);
 }
