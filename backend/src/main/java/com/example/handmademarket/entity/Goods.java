@@ -60,6 +60,9 @@ public class Goods {
     @Column(name = "audit_remark", length = 200)
     private String auditRemark;
 
+    @Column(name = "stock", nullable = false)
+    private Integer stock = 0;
+
     @Column(name = "images")
     private String imageUrl;
 
@@ -124,5 +127,8 @@ public class Goods {
 
     public String getAuditRemark() { return auditRemark; }
     public void setAuditRemark(String auditRemark) { this.auditRemark = auditRemark; }
+
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
 }
 

@@ -46,7 +46,7 @@ public interface OrderService {
     ResponseResult createOrder(String username, CreateOrderRequest request);
 
     /** 订单详情 */
-    ResponseResult getOrderDetail(String orderId);
+    ResponseResult getOrderDetail(String username, String orderId);
 
     /** 买家支付订单（模拟支付：全款/定金） */
     ResponseResult payOrder(String username, String orderId, String payType);
@@ -71,4 +71,10 @@ public interface OrderService {
 
     /** 买家申请维权 */
     ResponseResult applyDispute(String username, String orderId, String reason);
+
+    /** 统一交易管理：获取用户所有订单（买家+卖家，支持按角色和状态筛选） */
+    ResponseResult getAllUserOrders(String username, Integer status, String role);
+
+    /** 统一交易管理：获取交易统计（买+卖） */
+    ResponseResult getTradeStats(String username);
 }

@@ -36,9 +36,9 @@ public class CustomController {
         return jwtUtil.getUsernameFromToken(token);
     }
 
-    // ==================== 消费者端 ====================
+    // ==================== 需求方操作 ====================
 
-    /** 消费者：提交定制需求 */
+    /** 提交定制需求（需求方） */
     @PostMapping("/custom")
     public ResponseEntity<ResponseResult> submitCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -47,7 +47,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.submitCustom(username, request));
     }
 
-    /** 消费者：查看我的定制需求 */
+    /** 查看我提交的定制需求（需求方） */
     @GetMapping("/custom/my")
     public ResponseEntity<ResponseResult> getMyCustoms(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -55,7 +55,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.getMyCustoms(username));
     }
 
-    /** 消费者：取消定制需求 */
+    /** 取消定制需求（需求方） */
     @PutMapping("/custom/{customId}/cancel")
     public ResponseEntity<ResponseResult> cancelCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -64,7 +64,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.cancelCustom(username, customId));
     }
 
-    /** 消费者：确认定制完成 → 自动生成定制订单 */
+    /** 确认定制完成 → 自动生成定制订单（需求方） */
     @PostMapping("/custom/{customId}/confirm")
     public ResponseEntity<ResponseResult> confirmCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -75,9 +75,9 @@ public class CustomController {
         return ResponseEntity.ok(customService.confirmCustom(username, customId, deliveryAddress));
     }
 
-    // ==================== 创作者端 ====================
+    // ==================== 接单方操作 ====================
 
-    /** 创作者：查看可接的定制需求 */
+    /** 查看可接的定制需求（接单方） */
     @GetMapping("/custom/available")
     public ResponseEntity<ResponseResult> getAvailableCustoms(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -85,7 +85,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.getAvailableCustoms(username));
     }
 
-    /** 创作者：查看我接的定制单 */
+    /** 查看我接的定制单（接单方） */
     @GetMapping("/custom/accepted")
     public ResponseEntity<ResponseResult> getMyAcceptedCustoms(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -93,7 +93,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.getMyAcceptedCustoms(username));
     }
 
-    /** 创作者：接受定制需求（含报价） */
+    /** 接受定制需求（接单方，含报价） */
     @PostMapping("/custom/{customId}/accept")
     public ResponseEntity<ResponseResult> acceptCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -107,7 +107,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.acceptCustom(username, customId, quotedPrice));
     }
 
-    /** 创作者：拒绝定制需求 */
+    /** 拒绝定制需求（接单方） */
     @PostMapping("/custom/{customId}/reject")
     public ResponseEntity<ResponseResult> rejectCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -118,7 +118,7 @@ public class CustomController {
         return ResponseEntity.ok(customService.rejectCustom(username, customId, reason));
     }
 
-    /** 创作者：交付定制作品 */
+    /** 交付定制作品（接单方） */
     @PostMapping("/custom/{customId}/deliver")
     public ResponseEntity<ResponseResult> deliverCustom(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

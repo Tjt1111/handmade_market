@@ -101,7 +101,7 @@ public class CustomServiceImpl implements CustomService {
         return map;
     }
 
-    // ==================== 消费者操作 ====================
+    // ==================== 需求方操作 ====================
 
     @Override
     @Transactional
@@ -135,10 +135,11 @@ public class CustomServiceImpl implements CustomService {
         custom.setSubmitTime(LocalDateTime.now());
         custom.setStatus(0); // 待匹配
 
-        // 自动匹配：根据品类查找擅长该领域的创作者
+        // 自动匹配：根据品类查找擅长该领域的用户（不区分身份，所有用户均可接单）
         List<User> allUsers = userRepository.findAll();
+        Integer currentUserId = user.getUserId().intValue();
         List<String> matchedCreatorIds = allUsers.stream()
-                .filter(u -> "2".equals(u.getRole())) // 创作者
+                .filter(u -> !currentUserId.equals(u.getUserId().intValue())) // 排除自己
                 .filter(u -> u.getSpecialty() != null && u.getSpecialty().contains(request.getCategory()))
                 .map(u -> String.valueOf(u.getUserId()))
                 .collect(Collectors.toList());
@@ -183,7 +184,7 @@ public class CustomServiceImpl implements CustomService {
         }
 
         custom.setStatus(4); // 已取消
-        custom.setRemark("消费者主动取消");
+        custom.setRemark("需求方主动取消");
         customRepository.save(custom);
         return ResponseResult.ok("定制需求已取消");
     }
@@ -202,7 +203,7 @@ public class CustomServiceImpl implements CustomService {
             return ResponseResult.fail("该定制需求状态不允许确认（需为已接单状态）");
         }
         if (custom.getDeliverContent() == null || custom.getDeliverContent().isBlank()) {
-            return ResponseResult.fail("创作者尚未交付作品，无法确认");
+            return ResponseResult.fail("接单方尚未交付作品，无法确认");
         }
         if (deliveryAddress == null || deliveryAddress.isBlank()) {
             return ResponseResult.fail("收货地址不能为空");
@@ -253,7 +254,7 @@ public class CustomServiceImpl implements CustomService {
         return ResponseResult.ok("定制确认成功", data);
     }
 
-    // ==================== 创作者操作 ====================
+    // ==================== 接单方操作 ====================
 
     @Override
     public ResponseResult getAvailableCustoms(String username) {

@@ -252,9 +252,14 @@ public class ChatServiceImpl implements ChatService {
         Goods goods = goodsRepository.findById(goodsId.longValue())
                 .orElseThrow(() -> new RuntimeException("商品不存在"));
 
-        // 检查是否低于底价
+        // 不能对自己发布的商品出价
+        if (goods.getCreatorId() != null && goods.getCreatorId().equals(buyer.getUserId().intValue())) {
+            return ResponseResult.fail("不能对自己的商品出价");
+        }
+
+        // 检查是否低于底价（不透露底价具体数值）
         if (goods.getReservePrice() != null && offerPrice.compareTo(BigDecimal.valueOf(goods.getReservePrice())) < 0) {
-            return ResponseResult.fail("出价不能低于底价");
+            return ResponseResult.fail("出价过低，请适当提高");
         }
 
         // 如果出价 >= 售价，直接按售价成交
@@ -315,7 +320,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> new RuntimeException("商品不存在"));
 
         // 验证是该商品的创作者
-        if (!goods.getCreatorId().equals(seller.getUserId().intValue())) {
+        if (goods.getCreatorId() == null || !goods.getCreatorId().equals(seller.getUserId().intValue())) {
             return ResponseResult.fail("只有商品创作者可以还价");
         }
 

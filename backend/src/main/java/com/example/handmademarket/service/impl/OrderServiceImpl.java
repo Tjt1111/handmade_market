@@ -259,12 +259,17 @@ public class OrderServiceImpl implements OrderService {
         Map<Integer, Goods> goodsMap = new HashMap<>();
 
         for (CreateOrderRequest.OrderItemDTO item : request.getItems()) {
-            Goods goods = goodsRepository.findById(item.getGoodsId().longValue())
+            // 使用悲观锁查询，防止并发超卖
+            Goods goods = goodsRepository.findByIdForUpdate(item.getGoodsId().longValue())
                     .orElseThrow(() -> new RuntimeException("商品不存在: " + item.getGoodsId()));
             goodsMap.put(item.getGoodsId(), goods);
 
-            // 这里需要从Goods实体获取卖家ID（creator_id），当前Goods实体中没有这个字段
-            // 暂时使用 goods.getId() 作为 sellerId 的占位
+            // 校验库存
+            int stock = goods.getStock() != null ? goods.getStock() : 0;
+            if (stock < item.getQuantity()) {
+                return ResponseResult.fail("商品【" + goods.getTitle() + "】库存不足，当前库存: " + stock);
+            }
+
             Integer sellerId = goods.getCreatorId() != null ? goods.getCreatorId() : 0;
             sellerItemsMap.computeIfAbsent(sellerId, k -> new ArrayList<>()).add(item);
         }
@@ -299,7 +304,7 @@ public class OrderServiceImpl implements OrderService {
 
             orderRepository.save(order);
 
-            // 创建订单商品
+            // 创建订单商品并扣减库存
             for (CreateOrderRequest.OrderItemDTO item : items) {
                 Goods goods = goodsMap.get(item.getGoodsId());
                 OrderGoods og = new OrderGoods();
@@ -310,6 +315,11 @@ public class OrderServiceImpl implements OrderService {
                 og.setNum(item.getQuantity());
                 og.setCreateTime(LocalDateTime.now());
                 orderGoodsRepository.save(og);
+
+                // 扣减库存
+                int currentStock = goods.getStock() != null ? goods.getStock() : 0;
+                goods.setStock(currentStock - item.getQuantity());
+                goodsRepository.save(goods);
             }
 
             orderIds.add(orderId);
@@ -322,9 +332,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ResponseResult getOrderDetail(String orderId) {
+    public ResponseResult getOrderDetail(String username, String orderId) {
+        User user = getUserByUsername(username);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        // 权限校验：只有买家、卖家可以查看订单详情
+        Integer userId = user.getUserId().intValue();
+        if (!order.getBuyerId().equals(userId) && !order.getSellerId().equals(userId)) {
+            return ResponseResult.fail("无权查看此订单");
+        }
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", order.getOrderId());
@@ -551,13 +568,20 @@ public class OrderServiceImpl implements OrderService {
             return ResponseResult.fail("原订单商品信息不存在");
         }
 
-        // 检查商品是否仍然可购买
+        // 检查商品是否仍然可购买，并校验库存（悲观锁防止并发超卖）
         BigDecimal totalAmount = BigDecimal.ZERO;
+        Map<Integer, Goods> lockedGoodsMap = new HashMap<>();
         for (OrderGoods og : oldGoodsList) {
-            Optional<Goods> goodsOpt = goodsRepository.findById(og.getGoodsId().longValue());
+            Optional<Goods> goodsOpt = goodsRepository.findByIdForUpdate(og.getGoodsId().longValue());
             if (goodsOpt.isEmpty()) {
                 return ResponseResult.fail("商品\"" + og.getGoodsName() + "\"已下架，无法重新下单");
             }
+            Goods goods = goodsOpt.get();
+            int stock = goods.getStock() != null ? goods.getStock() : 0;
+            if (stock < og.getNum()) {
+                return ResponseResult.fail("商品【" + goods.getTitle() + "】库存不足，当前库存: " + stock);
+            }
+            lockedGoodsMap.put(og.getGoodsId(), goods);
         }
 
         // 创建新订单
@@ -572,18 +596,18 @@ public class OrderServiceImpl implements OrderService {
         newOrder.setCreateTime(LocalDateTime.now());
         newOrder.setStatus(0); // 待支付
 
-        // 重新计算金额（以当前价格为准）
+        // 重新计算金额（以当前价格为准，使用已锁定的商品对象）
         for (OrderGoods og : oldGoodsList) {
-            Goods goods = goodsRepository.findById(og.getGoodsId().longValue()).get();
+            Goods goods = lockedGoodsMap.get(og.getGoodsId());
             BigDecimal price = goods.getPrice() != null ? BigDecimal.valueOf(goods.getPrice()) : og.getPrice();
             totalAmount = totalAmount.add(price.multiply(BigDecimal.valueOf(og.getNum())));
         }
         newOrder.setAmount(totalAmount);
         orderRepository.save(newOrder);
 
-        // 复制订单商品
+        // 复制订单商品并扣减库存（使用已锁定的商品对象）
         for (OrderGoods og : oldGoodsList) {
-            Goods goods = goodsRepository.findById(og.getGoodsId().longValue()).get();
+            Goods goods = lockedGoodsMap.get(og.getGoodsId());
             OrderGoods newOg = new OrderGoods();
             newOg.setOrderId(newOrderId);
             newOg.setGoodsId(og.getGoodsId());
@@ -592,6 +616,11 @@ public class OrderServiceImpl implements OrderService {
             newOg.setNum(og.getNum());
             newOg.setCreateTime(LocalDateTime.now());
             orderGoodsRepository.save(newOg);
+
+            // 扣减库存
+            int currentStock = goods.getStock() != null ? goods.getStock() : 0;
+            goods.setStock(currentStock - og.getNum());
+            goodsRepository.save(goods);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -727,6 +756,16 @@ public class OrderServiceImpl implements OrderService {
             order.setCancelReason(cancelReason);
         }
         orderRepository.save(order);
+
+        // 恢复库存（悲观锁防止并发问题）
+        List<OrderGoods> orderGoodsList = orderGoodsRepository.findByOrderId(orderId);
+        for (OrderGoods og : orderGoodsList) {
+            goodsRepository.findByIdForUpdate(og.getGoodsId().longValue()).ifPresent(goods -> {
+                int currentStock = goods.getStock() != null ? goods.getStock() : 0;
+                goods.setStock(currentStock + og.getNum());
+                goodsRepository.save(goods);
+            });
+        }
 
         return ResponseResult.ok("订单已取消");
     }
@@ -978,10 +1017,154 @@ public class OrderServiceImpl implements OrderService {
 
         order.setDisputeStatus(1); // 1=维权中
         order.setDisputeTime(LocalDateTime.now());
-        order.setRemark("维权原因：" + reason);
+        // 保留原有备注，追加维权原因
+        String existingRemark = order.getRemark() != null ? order.getRemark() : "";
+        String prefix = existingRemark.isEmpty() ? "" : existingRemark + " | ";
+        order.setRemark(prefix + "维权原因：" + reason);
         orderRepository.save(order);
 
         return ResponseResult.ok("维权申请已提交，请等待管理员处理");
+    }
+
+    // ==================== 统一交易管理 ====================
+
+    @Override
+    public ResponseResult getAllUserOrders(String username, Integer status, String role) {
+        User user = getUserByUsername(username);
+        Integer userId = user.getUserId().intValue();
+
+        List<Map<String, Object>> allOrders = new ArrayList<>();
+
+        // 获取买家订单
+        if (role == null || role.isBlank() || "buyer".equals(role)) {
+            List<Order> buyerOrders;
+            if (status != null) {
+                buyerOrders = orderRepository.findByBuyerIdAndStatusOrderByCreateTimeDesc(userId, status);
+            } else {
+                buyerOrders = orderRepository.findByBuyerIdOrderByCreateTimeDesc(userId);
+            }
+            for (Order order : buyerOrders) {
+                Map<String, Object> map = buildUnifiedOrderMap(order, "buyer");
+                allOrders.add(map);
+            }
+        }
+
+        // 获取卖家订单
+        if (role == null || role.isBlank() || "seller".equals(role)) {
+            List<Order> sellerOrders;
+            if (status != null) {
+                sellerOrders = orderRepository.findBySellerIdAndStatusOrderByCreateTimeDesc(userId, status);
+            } else {
+                sellerOrders = orderRepository.findBySellerIdOrderByCreateTimeDesc(userId);
+            }
+            for (Order order : sellerOrders) {
+                Map<String, Object> map = buildUnifiedOrderMap(order, "seller");
+                allOrders.add(map);
+            }
+        }
+
+        // 按创建时间降序排列
+        allOrders.sort((a, b) -> {
+            String timeA = (String) a.getOrDefault("time", "");
+            String timeB = (String) b.getOrDefault("time", "");
+            return timeB.compareTo(timeA);
+        });
+
+        return ResponseResult.ok(allOrders);
+    }
+
+    @Override
+    public ResponseResult getTradeStats(String username) {
+        User user = getUserByUsername(username);
+        Integer userId = user.getUserId().intValue();
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+
+        // 买家统计
+        long buyOrders = orderRepository.countByBuyerId(userId);
+        BigDecimal buyAmount = orderRepository.sumAmountByBuyerId(userId);
+        stats.put("buyOrders", buyOrders);
+        stats.put("buyAmount", buyAmount != null ? buyAmount : BigDecimal.ZERO);
+
+        // 卖家统计
+        long sellOrders = orderRepository.countBySellerId(userId);
+        BigDecimal sellAmount = orderRepository.sumAmountBySellerId(userId);
+        long pendingOrders = orderRepository.countBySellerIdAndStatus(userId, 0)
+                + orderRepository.countBySellerIdAndStatus(userId, 1);
+        long goodsCount = goodsRepository.countByCreatorId(userId);
+        stats.put("sellOrders", sellOrders);
+        stats.put("sellAmount", sellAmount != null ? sellAmount : BigDecimal.ZERO);
+        stats.put("pendingOrders", pendingOrders);
+        stats.put("totalGoods", goodsCount);
+
+        // 总计
+        stats.put("totalOrders", buyOrders + sellOrders);
+        stats.put("totalAmount", (buyAmount != null ? buyAmount : BigDecimal.ZERO)
+                .add(sellAmount != null ? sellAmount : BigDecimal.ZERO));
+
+        return ResponseResult.ok(stats);
+    }
+
+    /** 构建统一订单Map（含角色标识） */
+    private Map<String, Object> buildUnifiedOrderMap(Order order, String role) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", order.getOrderId());
+        map.put("no", order.getOrderId());
+        map.put("role", role); // "buyer" 或 "seller"
+        map.put("time", order.getCreateTime() != null
+                ? order.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "");
+        map.put("status", statusToString(order.getStatus()));
+        map.put("statusText", statusToChinese(order.getStatus()));
+        map.put("orderType", order.getOrderType() != null && order.getOrderType() == 2 ? "定制订单" : "普通订单");
+        map.put("payType", order.getPayType());
+        map.put("paymentStatus", paymentStatusToString(order.getPaymentStatus()));
+        map.put("total", order.getAmount());
+        map.put("amount", order.getAmount());
+        map.put("deposit", order.getDeposit());
+        map.put("balance", order.getBalance());
+        map.put("address", order.getDeliveryAddress());
+        map.put("logisticsInfo", order.getLogisticsInfo());
+        map.put("cancelReason", order.getCancelReason());
+        map.put("remark", order.getRemark());
+        map.put("disputeStatus", disputeStatusToChinese(order.getDisputeStatus()));
+        map.put("disputeResult", order.getDisputeResult());
+
+        // 对方信息
+        if ("buyer".equals(role) && order.getSellerId() != null) {
+            userRepository.findById(order.getSellerId().longValue())
+                    .ifPresent(seller -> {
+                        map.put("otherName", seller.getUserName() != null ? seller.getUserName() : seller.getUserAccount());
+                        map.put("otherLabel", "卖家");
+                    });
+        } else if ("seller".equals(role) && order.getBuyerId() != null) {
+            userRepository.findById(order.getBuyerId().longValue())
+                    .ifPresent(buyer -> {
+                        map.put("otherName", buyer.getUserName() != null ? buyer.getUserName() : buyer.getUserAccount());
+                        map.put("otherLabel", "买家");
+                        map.put("buyerPhone", buyer.getPhone());
+                    });
+        }
+
+        // 订单商品
+        List<OrderGoods> goodsList = orderGoodsRepository.findByOrderId(order.getOrderId());
+        if (!goodsList.isEmpty()) {
+            OrderGoods firstItem = goodsList.get(0);
+            map.put("name", firstItem.getGoodsName());
+            map.put("quantity", firstItem.getNum());
+            map.put("price", firstItem.getPrice());
+            Optional<Goods> goods = goodsRepository.findById(firstItem.getGoodsId().longValue());
+            map.put("image", goods.map(Goods::getImageUrl).orElse(""));
+        } else {
+            map.put("name", "");
+            map.put("quantity", 0);
+            map.put("price", BigDecimal.ZERO);
+            map.put("image", "");
+        }
+
+        // 评价状态
+        map.put("commented", evaluationRepository.existsByOrderId(order.getOrderId()));
+
+        return map;
     }
 
     // ==================== 辅助方法 ====================
