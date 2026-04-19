@@ -25,6 +25,9 @@ public interface GoodsRepository extends JpaRepository<Goods, Long> {
     @Query("SELECT g FROM Goods g WHERE g.id = :id FOR UPDATE")
     Optional<Goods> findByIdForUpdate(@Param("id") Long id);
 
+    @Query("SELECT g FROM Goods g WHERE g.status = 1 AND (g.goodsName LIKE %:keyword% OR g.details LIKE %:keyword%)")
+    java.util.List<Goods> searchByKeyword(@Param("keyword") String keyword);
+
     long countByCreatorId(Long creatorId);
 }
 
