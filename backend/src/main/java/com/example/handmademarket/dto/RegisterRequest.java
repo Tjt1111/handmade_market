@@ -25,14 +25,6 @@ public class RegisterRequest {
         this.password = password;
     }
 
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
-    }
-
     public String getEmail() {
         return email;
     }
@@ -50,10 +42,18 @@ public class RegisterRequest {
     }
 
     public String getPhone() {
-        return phone;
+        return phone; 
     }
 
     public void setPhone(String phone) {
-        this.phone = phone;
+        this.phone = phone; 
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 }
