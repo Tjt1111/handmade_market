@@ -1,6 +1,6 @@
 package com.example.handmademarket.service.impl;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,21 +34,64 @@ public class AuthServiceImpl implements AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    // 生成唯一账号
+    private String generateUniqueUserAccount() {
+        String userAccount;
+        do {
+            userAccount = "user" + System.currentTimeMillis();
+        } while (userRepository.existsByUserAccount(userAccount));
+        return userAccount;
+    }
+
     @Override
     public ResponseResult login(LoginRequest request) {
-        if (request.getUserAccount() == null || request.getUserAccount().trim().isEmpty()) {
-            return ResponseResult.fail("用户名不能为空");
-        }
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-            return ResponseResult.fail("密码不能为空");
+
+        String userAccount = request.getUserAccount() == null ? "" : request.getUserAccount().replaceAll("\\s+", "");
+        String password = request.getPassword() == null ? "" : request.getPassword().trim();
+
+        if (userAccount.isEmpty() || password.isEmpty()) {
+            return ResponseResult.fail("账号密码不能为空");
         }
 
-        Optional<User> userOptional = userRepository.findByUserAccount(request.getUserAccount());
+        request.setUserAccount(userAccount);
+        request.setPassword(password);
+
+        // 登录类型 1=用户 2=管理员
+        if (1 == request.getType()) {
+            return userLogin(request);
+        } else if (2 == request.getType()) {
+            return adminLogin(request);
+        }
+        return ResponseResult.fail("登录类型错误");
+    }
+
+    //用户登录
+    private ResponseResult userLogin(LoginRequest request) {
+        //根据 手机号 或 账号 查询
+        Optional<User> userOptional = userRepository.findByUserAccountOrPhone(
+                request.getUserAccount(),
+                request.getUserAccount()
+        );
         if (userOptional.isEmpty()) {
             return ResponseResult.fail("账号或密码错误");
         }
         User user = userOptional.get();
+        //判断是否锁定
+        if (user.getStatus() == 2) {
+            long now = new Date().getTime();
+            long lockTime = user.getLockTime().getTime();
+            if (now - lockTime < 10 * 60 * 1000) { // 10分钟
+                return ResponseResult.fail("账号已锁定，请10分钟后再试");
+            } else {
+                // 自动解锁
+                user.setStatus(1);
+                user.setPwdErrorCount(0);
+                user.setLockTime(null);
+                userRepository.save(user);
+            }
+        }
 
+        //校验密码
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             Integer errorCount = user.getPwdErrorCount();
             if (errorCount == null) {
@@ -58,70 +101,120 @@ public class AuthServiceImpl implements AuthService {
             }
             user.setPwdErrorCount(errorCount);
 
-            if (errorCount >= 5) {
+            if (errorCount >= 5) { // 5次错误锁定
                 user.setStatus(2);
-                user.setLockTime(LocalDateTime.now());
+                user.setLockTime(new Date());
             }
             userRepository.save(user);
             return ResponseResult.fail("密码错误，剩余" + (5 - errorCount) + "次机会");
         }
 
-        // 登录成功，重置错误计数
+        //登录成功：重置错误次数
         user.setPwdErrorCount(0);
-        user.setLastLoginTime(LocalDateTime.now());
+        user.setLastLoginTime(new Date());
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getUserAccount());
+        Map<String, Object> map = new HashMap<>();
+        map.put("userAccount", user.getUserAccount());
+        map.put("token", token);
+        return ResponseResult.ok("登录成功", map);
+    }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("userAccount", user.getUserAccount());
-        data.put("userName", user.getUserName());
-        data.put("role", user.getRole());
-        data.put("userId", user.getUser_id());
+    //管理员登录
+    private ResponseResult adminLogin(LoginRequest request) {
+        Admin admin = adminRepository.findByAdminAccount(request.getUserAccount());
+        if (admin == null) {
+            return ResponseResult.fail("管理员账号不存在");
+        }
 
-        return ResponseResult.ok("登录成功", data);
+        if (admin.getStatus() == 0) {
+            return ResponseResult.fail("账号已禁用");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), admin.getAdminPwd())) {
+            return ResponseResult.fail("密码错误");
+        }
+
+        String token = jwtUtil.generateToken(admin.getAdminAccount());
+        Map<String, Object> map = new HashMap<>();
+        map.put("userAccount", admin.getAdminAccount());
+        map.put("token", token);
+        return ResponseResult.ok("登录成功", map);
     }
 
     @Override
     public ResponseResult register(RegisterRequest request) {
-        if (request.getUserAccount() == null || request.getUserAccount().trim().isEmpty()) {
-            return ResponseResult.fail("用户名不能为空");
+
+        String phone = request.getPhone() == null ? "" : request.getPhone().replaceAll("\\s+", "");
+        String password = request.getPassword() == null ? "" : request.getPassword().trim();
+        String confirmPassword = request.getConfirmPassword() == null ? "" : request.getConfirmPassword().trim();
+
+        if (phone.isEmpty()) {
+            return ResponseResult.fail("电话号码不能为空");
         }
-        if (request.getPassword() == null || request.getPassword().isEmpty()) {
+        if (password.isEmpty()) {
             return ResponseResult.fail("密码不能为空");
         }
-
-        if (userRepository.existsByUserAccount(request.getUserAccount())) {
-            return ResponseResult.fail("用户名已存在");
+        if (confirmPassword.isEmpty()) {
+            return ResponseResult.fail("确认密码不能为空");
         }
 
+        if (!password.equals(confirmPassword)) {
+            return ResponseResult.fail("两次输入的密码不一致");
+        }
+
+        if (phone.length() != 11) {
+            return ResponseResult.fail("手机号格式不正确");
+        }
+
+        if (password.length() < 6 || password.length() > 20) {
+            return ResponseResult.fail("密码长度必须在6-20位之间");
+        }
+        if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).{6,20}$")) {
+            return ResponseResult.fail("密码必须是字母+数字的组合");
+        }
+
+        if (userRepository.existsByPhone(phone)) {
+            return ResponseResult.fail("该手机号已注册，请直接登录");
+        }
+
+        String userAccount = generateUniqueUserAccount();
+
         User user = new User();
-        user.setUserAccount(request.getUserAccount());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
+        user.setUserAccount(userAccount);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setPhone(phone);
         user.setRole(request.getRole() != null ? request.getRole() : "1");
-        user.setRegisterTime(LocalDateTime.now());
-        user.setStatus(1);
         user.setCreditScore(80);
+        user.setStatus(1);
+        user.setRegisterTime(new Date());
 
         userRepository.save(user);
 
-        return ResponseResult.ok("注册成功");
+        String token = jwtUtil.generateToken(userAccount);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("userAccount", userAccount);
+        map.put("token", token);
+        return ResponseResult.ok("注册成功", map);
     }
 
     @Override
     public ResponseResult resetPassword(String account, String code) {
-        Optional<User> userOptional = userRepository.findByUserAccount(account);
+
+        String cleanAccount = account == null ? "" : account.replaceAll("\\s+", "");
+        
+        Optional<User> userOptional = userRepository.findByUserAccountOrPhone(cleanAccount, cleanAccount);
         if (userOptional.isEmpty()) {
             return ResponseResult.fail("账号不存在");
         }
+
         User user = userOptional.get();
+
         user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-        user.setPwdErrorCount(0);
-        user.setStatus(1);
         userRepository.save(user);
-        return ResponseResult.ok("密码已重置为默认密码：" + DEFAULT_PASSWORD);
+
+        return ResponseResult.ok("密码已重置为默认密码：a123456");
     }
 }
