@@ -86,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public ResponseResult getBuyerOrders(String username, Integer status) {
         User user = getUserByUsername(username);
-        Integer userId = user.getUser_id().intValue();
+        Integer userId = user.getUserId().intValue();
 
         List<Order> orders;
         if (status != null) {
@@ -153,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public ResponseResult getSellerOrders(String username, Integer status) {
         User user = getUserByUsername(username);
-        Integer userId = user.getUser_id().intValue();
+        Integer userId = user.getUserId().intValue();
 
         List<Order> orders;
         if (status != null) {
@@ -220,7 +220,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public ResponseResult getSellerStats(String username) {
         User user = getUserByUsername(username);
-        Integer sellerId = user.getUser_id().intValue();
+        Integer sellerId = user.getUserId().intValue();
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalSales", orderRepository.sumAmountBySellerId(sellerId));
@@ -287,7 +287,7 @@ public class OrderServiceImpl implements OrderService {
             Order order = new Order();
             String orderId = generateOrderId();
             order.setOrderId(orderId);
-            order.setBuyerId(buyer.getUser_id().intValue());
+            order.setBuyerId(buyer.getUserId().intValue());
             order.setSellerId(sellerId);
             order.setOrderType(1); // 普通订单
             order.setAmount(totalAmount);
@@ -390,7 +390,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!order.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getStatus() != 0) {
@@ -461,7 +461,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!order.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         // 定制订单才有尾款
@@ -507,7 +507,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getSellerId().equals(user.getUser_id().intValue())) {
+        if (!order.getSellerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getOrderType() == null || order.getOrderType() != 2) {
@@ -538,7 +538,7 @@ public class OrderServiceImpl implements OrderService {
         Order oldOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!oldOrder.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!oldOrder.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (oldOrder.getStatus() != 5) {
@@ -607,7 +607,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getSellerId().equals(user.getUser_id().intValue())) {
+        if (!order.getSellerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getStatus() != 0) {
@@ -630,7 +630,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getSellerId().equals(user.getUser_id().intValue())) {
+        if (!order.getSellerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getOrderType() == null || order.getOrderType() != 2) {
@@ -668,7 +668,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getSellerId().equals(user.getUser_id().intValue())) {
+        if (!order.getSellerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getStatus() != 1 && order.getStatus() != 2) {
@@ -692,7 +692,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!order.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getStatus() != 3) {
@@ -713,7 +713,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        Integer userId = user.getUser_id().intValue();
+        Integer userId = user.getUserId().intValue();
         if (!order.getBuyerId().equals(userId) && !order.getSellerId().equals(userId)) {
             return ResponseResult.fail("无权操作此订单");
         }
@@ -738,7 +738,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!order.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("只有买家可以评价");
         }
         if (order.getStatus() != 4) {
@@ -755,7 +755,7 @@ public class OrderServiceImpl implements OrderService {
         Evaluation eval = new Evaluation();
         eval.setEvalId(String.valueOf(System.currentTimeMillis()));
         eval.setOrderId(orderId);
-        eval.setEvaluatorId(user.getUser_id().intValue());
+        eval.setEvaluatorId(user.getUserId().intValue());
         eval.setEvaluatedId(order.getSellerId());
         eval.setScore(request.getScore());
         eval.setContent(request.getContent());
@@ -963,7 +963,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (!order.getBuyerId().equals(user.getUser_id().intValue())) {
+        if (!order.getBuyerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此订单");
         }
         if (order.getStatus() != 4) {

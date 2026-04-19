@@ -89,12 +89,12 @@ public class ChatServiceImpl implements ChatService {
         if (toUserId == null) {
             return ResponseResult.fail("接收人不能为空");
         }
-        if (user.getUser_id().intValue() == toUserId) {
+        if (user.getUserId().intValue() == toUserId) {
             return ResponseResult.fail("不能给自己发消息");
         }
 
         Chat chat = new Chat();
-        chat.setFromUserId(user.getUser_id().intValue());
+        chat.setFromUserId(user.getUserId().intValue());
         chat.setToUserId(toUserId);
         chat.setGoodsId(goodsId);
         chat.setCustomId(customId);
@@ -120,7 +120,7 @@ public class ChatServiceImpl implements ChatService {
         }
 
         Chat chat = new Chat();
-        chat.setFromUserId(user.getUser_id().intValue());
+        chat.setFromUserId(user.getUserId().intValue());
         chat.setToUserId(toUserId);
         chat.setGoodsId(goodsId);
         chat.setCustomId(customId);
@@ -141,7 +141,7 @@ public class ChatServiceImpl implements ChatService {
         Chat chat = chatRepository.findById(msgId)
                 .orElseThrow(() -> new RuntimeException("消息不存在"));
 
-        if (!chat.getFromUserId().equals(user.getUser_id().intValue())) {
+        if (!chat.getFromUserId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("只能撤回自己发送的消息");
         }
 
@@ -160,7 +160,7 @@ public class ChatServiceImpl implements ChatService {
     public ResponseResult getConversation(String username, Integer otherUserId, Integer goodsId) {
         User user = getUserByUsername(username);
         List<Chat> messages = chatRepository.findConversation(
-                goodsId, user.getUser_id().intValue(), otherUserId);
+                goodsId, user.getUserId().intValue(), otherUserId);
         List<Map<String, Object>> result = messages.stream()
                 .map(this::buildChatMap).collect(Collectors.toList());
 
@@ -180,7 +180,7 @@ public class ChatServiceImpl implements ChatService {
         // 对方信息
         userRepository.findById(otherUserId.longValue()).ifPresent(u -> {
             Map<String, Object> userInfo = new LinkedHashMap<>();
-            userInfo.put("userId", u.getUser_id());
+            userInfo.put("userId", u.getUserId());
             userInfo.put("userName", u.getUserName() != null ? u.getUserName() : u.getUserAccount());
             userInfo.put("avatar", u.getAvatar());
             data.put("otherUser", userInfo);
@@ -193,7 +193,7 @@ public class ChatServiceImpl implements ChatService {
     public ResponseResult getCustomConversation(String username, Integer otherUserId, Integer customId) {
         User user = getUserByUsername(username);
         List<Chat> messages = chatRepository.findCustomConversation(
-                customId, user.getUser_id().intValue(), otherUserId);
+                customId, user.getUserId().intValue(), otherUserId);
         List<Map<String, Object>> result = messages.stream()
                 .map(this::buildChatMap).collect(Collectors.toList());
 
@@ -205,13 +205,13 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ResponseResult getConversationList(String username) {
         User user = getUserByUsername(username);
-        List<Chat> latestMessages = chatRepository.findUserConversations(user.getUser_id().intValue());
+        List<Chat> latestMessages = chatRepository.findUserConversations(user.getUserId().intValue());
 
         List<Map<String, Object>> result = latestMessages.stream().map(msg -> {
             Map<String, Object> map = buildChatMap(msg);
 
             // 确定对方用户ID
-            Integer otherUserId = msg.getFromUserId().equals(user.getUser_id().intValue())
+            Integer otherUserId = msg.getFromUserId().equals(user.getUserId().intValue())
                     ? msg.getToUserId() : msg.getFromUserId();
             map.put("otherUserId", otherUserId);
 
@@ -261,7 +261,7 @@ public class ChatServiceImpl implements ChatService {
         boolean directDeal = goods.getPrice() != null && offerPrice.compareTo(BigDecimal.valueOf(goods.getPrice())) >= 0;
 
         Chat chat = new Chat();
-        chat.setFromUserId(buyer.getUser_id().intValue());
+        chat.setFromUserId(buyer.getUserId().intValue());
         chat.setToUserId(sellerId);
         chat.setGoodsId(goodsId);
         chat.setMsgType(2); // buyer_offer
@@ -275,7 +275,7 @@ public class ChatServiceImpl implements ChatService {
             // 自动接受
             Chat acceptMsg = new Chat();
             acceptMsg.setFromUserId(sellerId);
-            acceptMsg.setToUserId(buyer.getUser_id().intValue());
+            acceptMsg.setToUserId(buyer.getUserId().intValue());
             acceptMsg.setGoodsId(goodsId);
             acceptMsg.setMsgType(4); // accept
             acceptMsg.setBargainPrice(offerPrice);
@@ -315,7 +315,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> new RuntimeException("商品不存在"));
 
         // 验证是该商品的创作者
-        if (!goods.getCreatorId().equals(seller.getUser_id().intValue())) {
+        if (!goods.getCreatorId().equals(seller.getUserId().intValue())) {
             return ResponseResult.fail("只有商品创作者可以还价");
         }
 
@@ -325,7 +325,7 @@ public class ChatServiceImpl implements ChatService {
         }
 
         Chat chat = new Chat();
-        chat.setFromUserId(seller.getUser_id().intValue());
+        chat.setFromUserId(seller.getUserId().intValue());
         chat.setToUserId(buyerId);
         chat.setGoodsId(goodsId);
         chat.setMsgType(3); // seller_counter
@@ -349,14 +349,14 @@ public class ChatServiceImpl implements ChatService {
 
         // 查找最近的议价消息
         Optional<Chat> latestOpt = chatRepository.findLatestBargainMsg(
-                goodsId, user.getUser_id().intValue(), otherUserId);
+                goodsId, user.getUserId().intValue(), otherUserId);
         if (latestOpt.isEmpty()) {
             return ResponseResult.fail("没有找到待处理的议价记录");
         }
 
         Chat latest = latestOpt.get();
         // 不能接受自己的报价
-        if (latest.getFromUserId().equals(user.getUser_id().intValue())) {
+        if (latest.getFromUserId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("不能接受自己的报价");
         }
         // 最近的消息已经是接受/拒绝则不能重复操作
@@ -367,7 +367,7 @@ public class ChatServiceImpl implements ChatService {
         BigDecimal dealPrice = latest.getBargainPrice();
 
         Chat acceptMsg = new Chat();
-        acceptMsg.setFromUserId(user.getUser_id().intValue());
+        acceptMsg.setFromUserId(user.getUserId().intValue());
         acceptMsg.setToUserId(otherUserId);
         acceptMsg.setGoodsId(goodsId);
         acceptMsg.setMsgType(4); // accept
@@ -391,13 +391,13 @@ public class ChatServiceImpl implements ChatService {
         User user = getUserByUsername(username);
 
         Optional<Chat> latestOpt = chatRepository.findLatestBargainMsg(
-                goodsId, user.getUser_id().intValue(), otherUserId);
+                goodsId, user.getUserId().intValue(), otherUserId);
         if (latestOpt.isEmpty()) {
             return ResponseResult.fail("没有找到待处理的议价记录");
         }
 
         Chat latest = latestOpt.get();
-        if (latest.getFromUserId().equals(user.getUser_id().intValue())) {
+        if (latest.getFromUserId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("不能拒绝自己的报价");
         }
         if (latest.getMsgType() == 4 || latest.getMsgType() == 5) {
@@ -405,7 +405,7 @@ public class ChatServiceImpl implements ChatService {
         }
 
         Chat rejectMsg = new Chat();
-        rejectMsg.setFromUserId(user.getUser_id().intValue());
+        rejectMsg.setFromUserId(user.getUserId().intValue());
         rejectMsg.setToUserId(otherUserId);
         rejectMsg.setGoodsId(goodsId);
         rejectMsg.setMsgType(5); // reject
@@ -422,7 +422,7 @@ public class ChatServiceImpl implements ChatService {
     public ResponseResult getBargainHistory(String username, Integer goodsId, Integer otherUserId) {
         User user = getUserByUsername(username);
         List<Chat> messages = chatRepository.findConversation(
-                goodsId, user.getUser_id().intValue(), otherUserId);
+                goodsId, user.getUserId().intValue(), otherUserId);
 
         // 只取议价相关消息
         List<Map<String, Object>> result = messages.stream()
@@ -436,7 +436,7 @@ public class ChatServiceImpl implements ChatService {
 
         // 判断议价状态
         Optional<Chat> latestOpt = chatRepository.findLatestBargainMsg(
-                goodsId, user.getUser_id().intValue(), otherUserId);
+                goodsId, user.getUserId().intValue(), otherUserId);
         if (latestOpt.isPresent()) {
             Chat latest = latestOpt.get();
             String bargainStatus = switch (latest.getMsgType()) {
@@ -455,7 +455,7 @@ public class ChatServiceImpl implements ChatService {
         goodsRepository.findById(goodsId.longValue()).ifPresent(goods -> {
             data.put("originalPrice", goods.getPrice());
             // 不暴露底价给买家（只有卖家能看到）
-            if (goods.getCreatorId() != null && goods.getCreatorId().equals(user.getUser_id().intValue())) {
+            if (goods.getCreatorId() != null && goods.getCreatorId().equals(user.getUserId().intValue())) {
                 data.put("reservePrice", goods.getReservePrice());
             }
         });

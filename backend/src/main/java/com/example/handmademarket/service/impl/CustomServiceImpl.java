@@ -87,7 +87,7 @@ public class CustomServiceImpl implements CustomService {
             userRepository.findById(custom.getConsumerId().longValue())
                     .ifPresent(u -> {
                         map.put("consumerName", u.getUserName() != null ? u.getUserName() : u.getUserAccount());
-                        map.put("consumerId", u.getUser_id());
+                        map.put("consumerId", u.getUserId());
                     });
         }
         // 创作者信息
@@ -95,7 +95,7 @@ public class CustomServiceImpl implements CustomService {
             userRepository.findById(custom.getCreatorId().longValue())
                     .ifPresent(u -> {
                         map.put("creatorName", u.getUserName() != null ? u.getUserName() : u.getUserAccount());
-                        map.put("creatorId", u.getUser_id());
+                        map.put("creatorId", u.getUserId());
                     });
         }
         return map;
@@ -122,7 +122,7 @@ public class CustomServiceImpl implements CustomService {
         }
 
         Custom custom = new Custom();
-        custom.setConsumerId(user.getUser_id().intValue());
+        custom.setConsumerId(user.getUserId().intValue());
         custom.setCustomDesc(request.getCustomDesc());
         custom.setReferenceImages(request.getReferenceImages());
         custom.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
@@ -140,7 +140,7 @@ public class CustomServiceImpl implements CustomService {
         List<String> matchedCreatorIds = allUsers.stream()
                 .filter(u -> "2".equals(u.getRole())) // 创作者
                 .filter(u -> u.getSpecialty() != null && u.getSpecialty().contains(request.getCategory()))
-                .map(u -> String.valueOf(u.getUser_id()))
+                .map(u -> String.valueOf(u.getUserId()))
                 .collect(Collectors.toList());
 
         if (!matchedCreatorIds.isEmpty()) {
@@ -162,7 +162,7 @@ public class CustomServiceImpl implements CustomService {
     public ResponseResult getMyCustoms(String username) {
         User user = getUserByUsername(username);
         List<Custom> customs = customRepository.findByConsumerIdOrderBySubmitTimeDesc(
-                user.getUser_id().intValue());
+                user.getUserId().intValue());
         List<Map<String, Object>> result = customs.stream()
                 .map(this::buildCustomMap).collect(Collectors.toList());
         return ResponseResult.ok(result);
@@ -175,7 +175,7 @@ public class CustomServiceImpl implements CustomService {
         Custom custom = customRepository.findById(customId)
                 .orElseThrow(() -> new RuntimeException("定制需求不存在"));
 
-        if (!custom.getConsumerId().equals(user.getUser_id().intValue())) {
+        if (!custom.getConsumerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此定制需求");
         }
         if (custom.getStatus() >= 3) {
@@ -195,7 +195,7 @@ public class CustomServiceImpl implements CustomService {
         Custom custom = customRepository.findById(customId)
                 .orElseThrow(() -> new RuntimeException("定制需求不存在"));
 
-        if (!custom.getConsumerId().equals(user.getUser_id().intValue())) {
+        if (!custom.getConsumerId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此定制需求");
         }
         if (custom.getStatus() != 2) {
@@ -258,7 +258,7 @@ public class CustomServiceImpl implements CustomService {
     @Override
     public ResponseResult getAvailableCustoms(String username) {
         User user = getUserByUsername(username);
-        String userId = String.valueOf(user.getUser_id());
+        String userId = String.valueOf(user.getUserId());
 
         // 查找 status=0(待匹配) 的定制需求
         List<Custom> allPending = customRepository.findByStatusOrderBySubmitTimeDesc(0);
@@ -279,7 +279,7 @@ public class CustomServiceImpl implements CustomService {
     public ResponseResult getMyAcceptedCustoms(String username) {
         User user = getUserByUsername(username);
         List<Custom> customs = customRepository.findByCreatorIdOrderBySubmitTimeDesc(
-                user.getUser_id().intValue());
+                user.getUserId().intValue());
         List<Map<String, Object>> result = customs.stream()
                 .map(this::buildCustomMap).collect(Collectors.toList());
         return ResponseResult.ok(result);
@@ -300,7 +300,7 @@ public class CustomServiceImpl implements CustomService {
             return ResponseResult.fail("报价必须大于0");
         }
 
-        custom.setCreatorId(user.getUser_id().intValue());
+        custom.setCreatorId(user.getUserId().intValue());
         custom.setFinalUnitPrice(quotedPrice);
         custom.setStatus(2); // 已接单
         custom.setAcceptTime(LocalDateTime.now());
@@ -326,7 +326,7 @@ public class CustomServiceImpl implements CustomService {
         }
 
         // 从匹配列表中移除当前创作者
-        String userId = String.valueOf(user.getUser_id());
+        String userId = String.valueOf(user.getUserId());
         if (custom.getMatchCreators() != null) {
             List<String> creators = new ArrayList<>(Arrays.asList(custom.getMatchCreators().split(",")));
             creators.remove(userId);
@@ -349,7 +349,7 @@ public class CustomServiceImpl implements CustomService {
         Custom custom = customRepository.findById(customId)
                 .orElseThrow(() -> new RuntimeException("定制需求不存在"));
 
-        if (!custom.getCreatorId().equals(user.getUser_id().intValue())) {
+        if (!custom.getCreatorId().equals(user.getUserId().intValue())) {
             return ResponseResult.fail("无权操作此定制需求");
         }
         if (custom.getStatus() != 2) {
