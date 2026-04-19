@@ -123,18 +123,25 @@ public class AuthServiceImpl implements AuthService {
 
     //管理员登录
     private ResponseResult adminLogin(LoginRequest request) {
-        Admin admin = adminRepository.findByAdminAccount(request.getUserAccount());
-        if (admin == null) {
+        Optional<Admin> adminOptional = adminRepository.findByAdminAccount(request.getUserAccount());
+        if (adminOptional.isEmpty()) {
             return ResponseResult.fail("管理员账号不存在");
         }
+        Admin admin = adminOptional.get();
+
 
         if (admin.getStatus() == 0) {
             return ResponseResult.fail("账号已禁用");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), admin.getAdminPwd())) {
+        /*if (!passwordEncoder.matches(request.getPassword(), admin.getAdminPwd())) {
             return ResponseResult.fail("密码错误");
-        }
+        }*/
+       if(!request.getPassword().equals(admin.getAdminPwd())){
+           return ResponseResult.fail("密码错误");
+       }
+
+           
 
         String token = jwtUtil.generateToken(admin.getAdminAccount());
         Map<String, Object> map = new HashMap<>();

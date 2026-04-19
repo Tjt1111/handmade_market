@@ -38,6 +38,10 @@ CREATE TABLE tb_user (
     status INT DEFAULT 1 COMMENT '0-禁用 1-正常 2-锁定'
 ) COMMENT='用户表';
 
+ALTER TABLE tb_user 
+ADD COLUMN pwd_error_count INT DEFAULT 0 COMMENT '密码错误次数，用于锁定账号' AFTER username,
+ADD COLUMN lock_time DATETIME COMMENT '账号锁定时间' AFTER pwd_error_count;
+
 -- ==============================================
 -- 3. 商品表 tb_goods
 -- ==============================================
