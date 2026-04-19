@@ -4,6 +4,7 @@ public class CreateEvaluationRequest {
 
     private Long orderId;
     private Long evaluatedId;
+    private Long goodsId;
     private Integer score;
     private String content;
     private String images;
@@ -24,6 +25,14 @@ public class CreateEvaluationRequest {
 
     public void setEvaluatedId(Long evaluatedId) {
         this.evaluatedId = evaluatedId;
+    }
+
+    public Long getGoodsId() {
+        return goodsId;
+    }
+
+    public void setGoodsId(Long goodsId) {
+        this.goodsId = goodsId;
     }
 
     public Integer getScore() {

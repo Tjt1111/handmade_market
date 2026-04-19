@@ -6,9 +6,6 @@ import com.example.handmademarket.service.GoodsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -19,7 +16,7 @@ public class GoodsController {
     @Autowired
     private GoodsService goodsService;
 
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<ResponseResult> listGoods() {
         return ResponseEntity.ok(goodsService.listGoods());
     }
@@ -52,8 +49,10 @@ public class GoodsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseResult> updateGoods(@PathVariable Long id) {
-        return ResponseEntity.ok(goodsService.updateGoods(id));
+    public ResponseEntity<ResponseResult> updateGoods(
+            @PathVariable Long id,
+            @RequestBody CreateGoodsRequest request) {
+        return ResponseEntity.ok(goodsService.updateGoods(id, request));
     }
 
     @DeleteMapping("/{id}")

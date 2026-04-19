@@ -20,7 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     List<Order> findBySellerIdAndStatusOrderByCreateTimeDesc(Integer sellerId, Integer status);
 
-    List<Order> findAllByOrderByCreateTimeDesc();
+    List<Order> findAllOrderByCreateTimeDesc();
 
     /** 查询超时未支付的订单（状态=0 且创建时间早于指定时间） */
     @Query("SELECT o FROM Order o WHERE o.status = 0 AND o.createTime < :deadline")

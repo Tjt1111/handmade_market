@@ -11,7 +11,7 @@ public class Evaluation {
     private String evalId;
 
     @Column(name = "order_id")
-    private Long orderId;
+    private String orderId;
 
     @Column(name = "evaluator_id")
     private Long evaluatorId;
@@ -34,6 +34,9 @@ public class Evaluation {
     @Column(name = "create_time")
     private LocalDateTime createTime;
 
+    @Column(name = "goods_id")
+    private Long goodsId;
+
     public Evaluation() {}
 
     public String getEvalId() {
@@ -44,11 +47,11 @@ public class Evaluation {
         this.evalId = evalId;
     }
 
-    public Long getOrderId() {
+    public String getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(Long orderId) {
+    public void setOrderId(String orderId) {
         this.orderId = orderId;
     }
 
@@ -106,5 +109,13 @@ public class Evaluation {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public Long getGoodsId() {
+        return goodsId;
+    }
+
+    public void setGoodsId(Long goodsId) {
+        this.goodsId = goodsId;
     }
 }

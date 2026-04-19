@@ -20,4 +20,31 @@ public class EvaluationController {
             @RequestHeader("X-User-Id") Long evaluatorId) {
         return ResponseEntity.ok(evaluationService.submitEvaluation(request, evaluatorId));
     }
+
+    @GetMapping("/goods/{goodsId}")
+    public ResponseEntity<ResponseResult> getEvaluationsByGoods(
+            @PathVariable Long goodsId,
+            @RequestParam(required = false) Integer sortBy) {
+        return ResponseEntity.ok(evaluationService.getEvaluationsByGoods(goodsId, sortBy));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ResponseResult> getEvaluationsByUser(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Integer sortBy) {
+        return ResponseEntity.ok(evaluationService.getEvaluationsByUser(userId, sortBy));
+    }
+
+    @PostMapping("/{evalId}/violation")
+    public ResponseEntity<ResponseResult> handleViolationReport(
+            @PathVariable String evalId,
+            @RequestParam Integer action,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(evaluationService.handleViolationReport(evalId, action, reason));
+    }
+
+    @GetMapping("/violations/reports")
+    public ResponseEntity<ResponseResult> getViolationReports() {
+        return ResponseEntity.ok(evaluationService.getViolationReports());
+    }
 }

@@ -236,7 +236,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public ResponseResult getAllOrders() {
-        List<Order> orders = orderRepository.findAllByOrderByCreateTimeDesc();
+        List<Order> orders = orderRepository.findAllOrderByCreateTimeDesc();
         List<Map<String, Object>> result = orders.stream().map(this::buildAdminOrderMap).collect(Collectors.toList());
         return ResponseResult.ok(result);
     }
@@ -794,8 +794,8 @@ public class OrderServiceImpl implements OrderService {
         Evaluation eval = new Evaluation();
         eval.setEvalId(String.valueOf(System.currentTimeMillis()));
         eval.setOrderId(orderId);
-        eval.setEvaluatorId(user.getUserId().intValue());
-        eval.setEvaluatedId(order.getSellerId());
+        eval.setEvaluatorId(user.getUserId().longValue());
+        eval.setEvaluatedId(order.getSellerId().longValue());
         eval.setScore(request.getScore());
         eval.setContent(request.getContent());
         eval.setImages(request.getImages());

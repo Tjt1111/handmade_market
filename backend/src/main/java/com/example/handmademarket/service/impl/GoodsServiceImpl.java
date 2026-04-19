@@ -50,7 +50,7 @@ public class GoodsServiceImpl implements GoodsService {
 
         Goods goods = new Goods();
         goods.setCreatorId(creatorId);
-        goods.setGoodsName(request.getGoodsName());
+        goods.setTitle(request.getGoodsName());
         goods.setPrice(request.getPrice());
         goods.setReservePrice(request.getReservePrice());
         goods.setMaterial(request.getMaterial());
@@ -58,7 +58,7 @@ public class GoodsServiceImpl implements GoodsService {
         goods.setStyle(request.getStyle());
         goods.setDeliveryCycle(request.getDeliveryCycle());
         goods.setDetails(request.getDetails());
-        goods.setImages(request.getImages());
+        goods.setImageUrl(request.getImages());
         goods.setCategory(request.getCategory());
         goods.setStatus(0);
         goods.setPublishTime(LocalDateTime.now());
@@ -68,12 +68,24 @@ public class GoodsServiceImpl implements GoodsService {
     }
 
     @Override
-    public ResponseResult updateGoods(Long id) {
+    public ResponseResult updateGoods(Long id, CreateGoodsRequest request) {
         Optional<Goods> goods = goodsRepository.findById(id);
         if (goods.isEmpty()) {
             return ResponseResult.fail("商品不存在");
         }
-        return ResponseResult.ok(goods.get());
+        Goods good = goods.get();
+        good.setTitle(request.getGoodsName());
+        good.setPrice(request.getPrice());
+        good.setReservePrice(request.getReservePrice());
+        good.setMaterial(request.getMaterial());
+        good.setSize(request.getSize());
+        good.setStyle(request.getStyle());
+        good.setDeliveryCycle(request.getDeliveryCycle());
+        good.setDetails(request.getDetails());
+        good.setImageUrl(request.getImages());
+        good.setCategory(request.getCategory());
+        Goods updated = goodsRepository.save(good);
+        return ResponseResult.ok("商品更新成功", updated);
     }
 
     @Override

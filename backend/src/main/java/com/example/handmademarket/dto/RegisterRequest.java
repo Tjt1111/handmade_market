@@ -7,6 +7,7 @@ public class RegisterRequest {
     private String email;
     private String role;
     private String phone;
+    private String userName;
 
     public String getUserAccount() {
         return userAccount;
@@ -46,14 +47,6 @@ public class RegisterRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getPhone() {
-        return phone; 
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone; 
     }
 
     public String getConfirmPassword() {

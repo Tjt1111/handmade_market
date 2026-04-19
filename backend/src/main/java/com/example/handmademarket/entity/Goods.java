@@ -45,6 +45,15 @@ public class Goods {
     @Column(name = "category")
     private String category;
 
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "stock")
+    private Integer stock;
+
     @Column(name = "publish_time")
     private LocalDateTime publishTime;
 
@@ -154,11 +163,37 @@ public class Goods {
         this.images = images;
     }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public String getCategory() {
+        return category;
+    }
 
-    public Double getReservePrice() { return reservePrice; }
-    public void setReservePrice(Double reservePrice) { this.reservePrice = reservePrice; }
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
 
     public LocalDateTime getPublishTime() {
         return publishTime;

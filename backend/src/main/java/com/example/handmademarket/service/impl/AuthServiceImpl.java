@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.example.handmademarket.dto.LoginRequest;
 import com.example.handmademarket.dto.RegisterRequest;
@@ -15,12 +16,8 @@ import com.example.handmademarket.entity.User;
 import com.example.handmademarket.repository.AdminRepository;
 import com.example.handmademarket.repository.UserRepository;
 import com.example.handmademarket.service.AuthService;
+import com.example.handmademarket.util.JwtUtil;
 import com.example.handmademarket.util.ResponseResult;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -196,7 +193,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUserAccount(userAccount);
         user.setPassword(passwordEncoder.encode(password));
         user.setPhone(phone);
-        user.setRole(request.getRole() != null ? request.getRole() : "1");
+        //user.setRole(request.getRole() != null ? request.getRole() : "1");
         user.setCreditScore(80);
         user.setStatus(1);
         user.setRegisterTime(new Date());
