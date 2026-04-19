@@ -1,14 +1,15 @@
 package com.example.handmademarket.repository;
 
-import com.example.handmademarket.entity.Order;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.example.handmademarket.entity.Order;
 
 public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecificationExecutor<Order> {
 
@@ -20,7 +21,7 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     List<Order> findBySellerIdAndStatusOrderByCreateTimeDesc(Integer sellerId, Integer status);
 
-    List<Order> findAllOrderByCreateTimeDesc();
+    List<Order> findAllByOrderByCreateTimeDesc();
 
     /** 查询超时未支付的订单（状态=0 且创建时间早于指定时间） */
     @Query("SELECT o FROM Order o WHERE o.status = 0 AND o.createTime < :deadline")

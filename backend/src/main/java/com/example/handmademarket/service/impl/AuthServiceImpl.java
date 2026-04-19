@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.example.handmademarket.dto.LoginRequest;
 import com.example.handmademarket.dto.RegisterRequest;
@@ -138,9 +137,10 @@ public class AuthServiceImpl implements AuthService {
         /*if (!passwordEncoder.matches(request.getPassword(), admin.getAdminPwd())) {
             return ResponseResult.fail("密码错误");
         }*/
-       if(!request.getPassword().equals(admin.getAdminPwd())){
-           return ResponseResult.fail("密码错误");
-       }
+
+        if(!request.getPassword().equals(admin.getAdminPwd())){
+            return ResponseResult.fail("密码错误");
+        }
 
            
 
